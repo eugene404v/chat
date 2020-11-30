@@ -2,17 +2,13 @@ import axios from "axios";
 
 const initialState = {
     isLoaded: false,
-  address: "no",
-  district: "",
-  fullName: "WWWWWWW",
-  name: "",
-  lead: {},
-  operator: {},
+  children: [],
+  
 };
 
-const institutionReducer = (state = initialState, action) => {
+const childByInst = (state = initialState, action) => {
   switch (action.type) {
-    case "SET_INSTITUTION": {
+    case "SET_CHILD_BY_INST": {
       return {
         ...state,
         ...action.data,
@@ -25,26 +21,26 @@ const institutionReducer = (state = initialState, action) => {
   }
 };
 
-export const fetchInstitution = (id) => (dispatch) => {
+export const fetchChildByInst = (id) => (dispatch) => {
   axios
-    .get(`/institution/view/${id}`, {
+    .get(`/children/filter/institution/${id}`, {
       headers: {
         Accept: "text/json",
       },
     })
     .then(function (response) {
-      dispatch(setInstitution(response.data.source));
+      dispatch(setChildByInst(response.data));
     });
 };
 
-export const setInstitution = (data) => {
+export const setChildByInst = (data) => {
     return {
-        type: 'SET_INSTITUTION',
+        type: 'SET_CHILD_BY_INST',
         data
     }
 }
 
-export const editInstitution = (data, id) => (dispatch) => {
+/*export const editInstitution = (data, id) => (dispatch) => {
     const formData = {}
     var formdata = new FormData();
     let key
@@ -61,6 +57,6 @@ export const editInstitution = (data, id) => (dispatch) => {
       .then(function (response) {
         dispatch(setInstitution(response.data.source));
       });
-}
+}*/
 
-export default institutionReducer;
+export default childByInst;

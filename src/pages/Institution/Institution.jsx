@@ -1,6 +1,5 @@
 import React from "react";
-import axios from 'axios'
-import {Form, Button, Table} from 'antd'
+import {Form, Button, Table, Spin} from 'antd'
 import moment from 'moment';
 import {useParams} from 'react-router-dom'
 import {useSelector, useDispatch} from 'react-redux'
@@ -46,7 +45,7 @@ const onFinish = values => {
       <h1>КАРТА УЧРЕЖДЕНИЯ</h1> 
 
       <Button onClick={accessHandler}>change access</Button>
-{pageData.isLoaded && <Form dependencies={[pageData]}  onFinish={onFinish} initialValues={{ 
+{pageData.isLoaded ? <Form dependencies={[pageData]}  onFinish={onFinish} initialValues={{ 
       fullName: pageData.fullName,
       name: pageData.name,
       address: pageData.address,
@@ -62,14 +61,14 @@ const onFinish = values => {
       <EditableText descr='Адрес' text={pageData.address} access={access} fieldName='address' />
       <EditableSelect descr='Район' text={pageData.district} access={access} selectArray={[{id: 1, text: 'Ленинский'}, {id: 2, text: 'Кировский'}]} fieldName='district' />
       <EditableSelect descr='Руководитель' text={pageData.lead.name} access={access} selectArray={[{id: 1, text: 'Ваня'}, {id: 2, text: 'Димас'}]} fieldName='lead' />
-      <PairLink descr='Список детей, прикрепленных к организации' link='/spec' text='Перейти' />
-      <PairLink descr='Список специалистов организации' link='/spec' text='Перейти' />
+      <PairLink descr='Список детей, прикрепленных к организации' link={`/children/filter/institution/${urlId}`} text='Перейти' />
+      <PairLink descr='Список специалистов организации' link={`/speclist/view/${urlId}`} text='Перейти' />
       <EditableSelect descr='Оператор организации' text={pageData.operator.name} access={access} selectArray={[{id: 1, text: 'Гоша'}, {id: 2, text: 'Алеша'}]} fieldName='operator'/>
       <Pair descr='Номер приказа о назначении'>{pageData.operator.orderNum}</Pair>
       <Pair descr='Дата приказа о назначении'>{pageData.operator.orderDate}</Pair>
       <Pair descr='Обязательство о неразглашении'>{pageData.operator.silence}</Pair>
       {access && <Button  type="primary" htmlType="submit">Сохранить изменения</Button>}
-    </Form>}
+    </Form> : <Spin size="large" />}
     {pageData.isLoaded && <Table dataSource={data} pagination={false}  bordered>
       <Table.Column title="Всего детей, состоящих на профилактическом учете" dataIndex="childrenCount" key="childrenCount" width="200px"/>
       <Table.ColumnGroup title="из них по видам учета:">

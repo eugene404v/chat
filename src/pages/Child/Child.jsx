@@ -1,9 +1,11 @@
 import React from "react";
-import axios from 'axios'
 import {Form, Button, Table} from 'antd'
 import moment from 'moment';
+import {useParams} from 'react-router-dom'
+import {useSelector, useDispatch} from 'react-redux'
+import {fetchChild, refreshChild, editChild} from 'redux/reducers/childReducer'
 
-import {EditableText, EditableDate, EditableSelect, PairLink} from "components";
+import {EditableText, EditableDate, EditableSelect, PairLink, Pair, EditableCheckbox} from "components";
 
 
 
@@ -16,16 +18,16 @@ const data = [
   }
 ];
 
-function Home() {
+function Child() {
+const urlId = useParams().id
 const [access, setAccess] = React.useState(false)
+const dispatch = useDispatch()
+const childData = useSelector(state => state.childReducer)
 
 React.useEffect(() => {
-axios
-  .get(`https://jsonplaceholder.typicode.com/users`)
-  .then(function (response) {
-    console.log(JSON.stringify(response.data)) 
-  });
-}, [])
+    dispatch(refreshChild())
+    dispatch(fetchChild(urlId))
+}, [dispatch, urlId])
 
 const accessHandler = () => {
   if (access === false) {
@@ -36,47 +38,46 @@ const accessHandler = () => {
 }
 
 const onFinish = values => {
-  axios
-  .post('/api', {...values})
-  .then(function (response) {
-    console.log(JSON.stringify(response.data)) 
-  });
+  dispatch(editChild(values, urlId))
 };
 
   return (
     <section className="home">
-      <h1>КАРТА РЕБЕНКА</h1>
+      <h1>КАРТА РЕБЕНКА</h1> 
+
       <Button onClick={accessHandler}>change access</Button>
-
-    <Form onFinish={onFinish} initialValues={{ 
-      fullName: 'ИВАН',
-      birthDate: moment('2020-06-09T12:40:14+0000'),
-
-      shortName: 'ПФРО МГБ',
-      address: 'г.Ленинск, ул.Ленина, дом Ленина',
-      district: 'Ленинский',
-      lead: 'Ваня',
-      operator: 'Гоша',
-      orderNum: '123',
-      remember: true,
+{childData.isLoaded && <Form  onFinish={onFinish} initialValues={{ 
+      name: childData.name,
+      birthDate: moment(childData.birthDate),
+      institution: childData.institution.id,
+      addressReg: childData.addressReg,
+      addressFact: childData.addressFact,
+      document: childData.document,
+      district: childData.institution.district,
+      disability: childData.disability,
+      invalid: childData.invalid,
+      alcoholism: childData.alcoholism,
+      smoking: childData.smoking,
+      drugs: childData.drugs,
+      other: childData.other,
       }} >
-      <EditableText descr='ФИО' text='ИВАН' access={access} fieldName='fullName'/>
-      <EditableDate descr='Дата приказа о назначении' day='2003-05-11' access={access} fieldName='birthDate' />
+      <EditableText descr='ФИО' text={childData.name} access={access} fieldName='name'/>
+      <EditableDate descr='Дата рождения' day={moment(childData.birthDate).format('YYYY.MM.DD').toString()} access={access} fieldName='birthDate'/>
+      <EditableSelect descr='Организация' text={childData.institution.name} access={access} selectArray={[{id: 1, text: 'Ленинский'}, {id: 2, text: 'Кировский'}]} fieldName='institution' />
+      <EditableText descr='Адрес регистрации' text={childData.addressReg} access={access} fieldName='addressReg'/>
+      <EditableText descr='Адрес фактического проживания' text={childData.addressFact} access={access} fieldName='addressFact'/>
+      <EditableText descr='Документ, удостоверяющий личность' text={childData.document} access={access} fieldName='document'/>
+      <EditableSelect descr='Район' text={childData.institution.district} access={access} selectArray={[{id: 1, text: 'Ленинский'}, {id: 2, text: 'Кировский'}]} fieldName='district' />
+      <EditableCheckbox descr='Ограниченные возможности здоровья' initialBoolean={childData.disability} access={access} fieldName='disability'/>
+      <EditableCheckbox descr='Инвалидность' initialBoolean={childData.invalid} access={access} fieldName='invalid'/>
+      <EditableCheckbox descr='Алкогольная зависимость' initialBoolean={childData.alcoholism} access={access} fieldName='alcoholism'/>
+      <EditableCheckbox descr='Табачная зависимость' initialBoolean={childData.smoking} access={access} fieldName='smoking'/>
+      <EditableCheckbox descr='Наркотическая зависимость' initialBoolean={childData.drugs} access={access} fieldName='drugs'/>
+      <EditableCheckbox descr='Иная зависимость' initialBoolean={childData.other} access={access} fieldName='other'/>
 
-      <EditableText descr='Краткое наименование' text='ПФРО МГБ' access={access} fieldName='shortName' />
-      <EditableText descr='Адрес' text='г.Ленинск, ул.Ленина, дом Ленина' access={access} fieldName='address' />
-      <EditableSelect descr='Район' text='Ленинский' access={access} selectArray={[{value: 'Ленинский', text: 'Ленинский'}, {value: 'Кировский', text: 'Кировский'}]} fieldName='district' />
-      <EditableSelect descr='Руководитель' text='Ваня' access={access} selectArray={[{value: 'Ваня', text: 'Ваня'}, {value: 'Димас', text: 'Димас'}]} fieldName='lead' />
-      <PairLink descr='Список детей, прикрепленных к организации' link='/' text='Перейти' />
-      <PairLink descr='Список специалистов организации' link='/' text='Перейти' />
-      <EditableSelect descr='Оператор организации' text='Гоша' access={access} selectArray={[{value: 'Гоша', text: 'Гоша'}, {value: 'Пидор', text: 'Пидор'}]} fieldName='operator'/>
-      <EditableText descr='Номер приказа о назначении' text='123' access={access} fieldName='orderNum' />
-      <EditableDate descr='Дата приказа о назначении' day='2003-05-11' access={access} fieldName='orderDate' />
-      <EditableSelect descr='Обязательство о неразглашении' text='Какое?' access={access} selectArray={[{value: 'Какое?', text: 'Какое?'}, {value: 'Такое', text: 'Такое'}]} fieldName='silence' />
       {access && <Button  type="primary" htmlType="submit">Сохранить изменения</Button>}
-    </Form>
-
-    <Table dataSource={data} pagination={false}  bordered>
+    </Form>}
+    {childData.isLoaded && <Table dataSource={data} pagination={false}  bordered>
       <Table.Column title="Всего детей, состоящих на профилактическом учете" dataIndex="childrenCount" key="childrenCount" width="200px"/>
       <Table.ColumnGroup title="из них по видам учета:">
         <Table.Column title="ВШУ" dataIndex="firstName" key="firstName" />
@@ -88,12 +89,14 @@ const onFinish = values => {
         <Table.Column title="МСК" dataIndex="firstName" key="firstName" />
         <Table.Column title="Группа риска" dataIndex="firstName" key="firstName" />
       </Table.ColumnGroup>
-      <Table.Column title="Количество специалистов" dataIndex="age" key="age" />
-    </Table>
+      <Table.Column title="Количество специалистов" dataIndex="specialistsCount" key="specialistsCount" />
+    </Table>}
+
+    
       
       
     </section>
   );
 }
 
-export default Home;
+export default Child;
