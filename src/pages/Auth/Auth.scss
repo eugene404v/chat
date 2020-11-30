@@ -1,0 +1,46 @@
+.auth {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    & .block {
+        width: 430px;
+        flex-shrink: 0;
+    }
+    &__top {
+        text-align: center;
+        & h2 {
+            font-size: 28px;
+            margin-bottom: 0;
+            font-weight: 700;
+        }
+        & p {
+            opacity: 0.5;
+            color: #202020;
+            font-size: 18px;
+            margin-bottom: 50px;
+        }
+    }
+    & .button {
+        text-transform: uppercase;
+        font-size: 14px;
+        width: 100%;
+    }
+    &__registerlink {
+        text-align: center;
+        width: 200px;
+        display: block;
+        color: #adadad;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    &__success {
+        padding-top: 50px;
+
+        text-align: center;
+        & h2 {
+            margin-top: 20px;
+        }
+    }
+}

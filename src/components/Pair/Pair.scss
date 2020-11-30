@@ -1,0 +1,9 @@
+.pair {
+    display: flex;
+    &__descr {
+        margin-right: 20px;
+    }
+    &__value {
+        margin-right: 20px;
+    }
+}
