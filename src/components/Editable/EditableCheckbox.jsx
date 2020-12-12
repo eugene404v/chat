@@ -8,9 +8,8 @@ function EditableCheckbox(props) {
     const initialAnswer = props.initialBoolean ? 'Да' : 'Нет'
 const [answer, setAnswer] = React.useState(initialAnswer)
 
-const checkHandler = (e) => {
-    alert(e.target.checked)
-    if (e.target.checked == true) {
+const checkHandler = (checked, e) => {
+    if (checked == true) {
         setAnswer('Да')
     } else {
         setAnswer('Нет')
@@ -21,7 +20,7 @@ const checkHandler = (e) => {
     <div className="editable">
       <Pair descr={props.descr}>{answer}</Pair>
       {props.access && (
-        <Form.Item name={props.fieldName} shouldUpdate getValuePropName={props.initialBoolean&&'checked'}>
+        <Form.Item name={props.fieldName} shouldUpdate valuePropName={'checked'}>
           <Switch onChange={checkHandler} />
         </Form.Item>
       )}

@@ -7,16 +7,16 @@ import './Editable.scss'
 function EditableSelect(props) {
   const [text, setText] = React.useState(props.text);
   const changeHandler = (value) => {
-    setText(props.selectArray.find(el => el.id===value).text);
+    setText(props.selectArray.find(el => el.id===value).name);
   };
   return (
     <div className="editable">
       <Pair descr={props.descr}>{text}</Pair>
       {props.access && (
         <Form.Item name={props.fieldName} shouldUpdate>
-          <Select onSelect={value => changeHandler(value)} >
-            {props.selectArray.map((el) => {
-              return <Select.Option value={el.id} key={el.text} title={el.text}>{el.text}</Select.Option>;
+          <Select onSelect={value => changeHandler(value)} placeholder={props.placeholder} >
+            {props.selectArray && props.selectArray.map((el) => {
+              return <Select.Option value={el.id} key={el.name} title={el.name}>{el.name}</Select.Option>;
             })}
           </Select>
         </Form.Item>

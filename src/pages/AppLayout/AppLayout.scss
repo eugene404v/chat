@@ -1,0 +1,27 @@
+.app {
+    width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    display: grid;
+    grid-template-rows: 150px auto;
+    grid-template-columns: 200px 1fr;
+    grid-template-areas: 'nav nav' 'side content';
+    &__content {
+        grid-area: content;
+    }
+    &__navbar {
+        grid-area: nav;
+        background-color: blueviolet;
+        display: flex;
+        padding-left: 30px;
+        padding-right: 30px;
+        justify-content: space-between;
+        align-items: center;
+        height: 150px;
+    }
+    &__sidebar {
+        grid-area: side;
+        background-color: coral;
+        min-height: 100vh;
+    }
+}

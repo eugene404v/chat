@@ -23,7 +23,7 @@ function EditableText(props) {
             },
           ]}
         >
-          <Input defaultValue={text} onChange={(e) => changeHandler(e)} />
+          <Input defaultValue={text} onChange={(e) => changeHandler(e)} maxLength={props.maxLength} placeholder={props.placeholder}/>
         </Form.Item>
       )}
     </div>

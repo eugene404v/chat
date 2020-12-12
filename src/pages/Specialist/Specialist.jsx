@@ -1,92 +1,86 @@
 import React from 'react'
-import {Form, Button, Table} from 'antd'
+import {Form, Button} from 'antd'
+import {useDispatch, useSelector} from 'react-redux'
+import {useParams} from 'react-router-dom'
 
-import {EditableText, EditableNum, EditableSelect, PairLink} from "components";
+import {EditableText, EditableNum, EditableSelect} from "components";
+import { editSpecialist, fetchSpecialist, refreshSpecialist, fetchSelects } from 'redux/reducers/specialistReducer';
 
 function Specialist() {
-    const [access, setAccess] = React.useState(false)
+    const dispatch = useDispatch()
+    const specData = useSelector(state => state.specialistReducer)
+    const [edit, setEdit] = React.useState(false)
+    const urlId = useParams().id
 
-    const accessHandler = () => {
-      if (access === false) {
-        setAccess(true)
+    React.useEffect(()=> {
+        dispatch(refreshSpecialist())
+        dispatch(fetchSpecialist(urlId))
+    }, [dispatch])
+
+    const editHandler = () => {
+      if (edit === false) {
+          dispatch(fetchSelects(specData._guideFields.institution.fromId, specData._guideFields.district.fromId, specData._guideFields.job.fromId, specData._guideFields.jobChar.fromId, specData._guideFields.jobType.fromId))
+        setEdit(true)
       } else {
-        setAccess(false)
+        setEdit(false)
       }
     }
     
+
+
     const onFinish = values => {
-      console.log(values);
+        dispatch(editSpecialist(values, urlId))
     };
 
-    const data = [
-        {
-          key: '1',
-          job: {
-              title: 'nice',
-            allJobs: [{value: 'nice', text: 'nice'}, {value: 'developer', text: 'developer'}],
-          },       
-          jobChar: 'nice',
-          allJobChars: [{value: 'nice', text: 'nice'}, {value: 'developer', text: 'developer'}],
-          jobType: 'nice',
-          allJobTypes: [{value: 'nice', text: 'nice'}, {value: 'developer', text: 'developer'}],
-          jobExpereince: 1,
-        }
-      ];
-
-      const columns = [
-        {
-          title: 'Должность',
-          render: () => <EditableSelect descr='' text={data[0].job.title} access={access} selectArray={data[0].job.allJobs} fieldName='job'/>,
-        },
-        {
-            title: 'Характер работы',
-            render: () => <EditableSelect descr='' text={data[0].jobChar} access={access} selectArray={data[0].allJobChars} fieldName='jobChar'/>,
-        },
-        {
-            title: 'Вид работы',
-            render: () => <EditableSelect descr='' text={data[0].jobType} access={access} selectArray={data[0].allJobTypes} fieldName='jobType'/>,
-        },
-        {
-            title: 'Стаж в должности',
-            render: () => <EditableNum descr='' text={data[0].jobExpereince} access={access} fieldName='jobExpereince'/>,
-        },
-       
-      ];
 
     return (
         <section className="specialist">
             <h1>КАРТА СПЕЦИАЛИСТА</h1>
-            <Button onClick={accessHandler}>change access</Button>
-        <Form onFinish={onFinish} initialValues={{ 
-                fullName: 'Иван Иваныч',
-                district: 'Ленинский',
-                organization: 'ОПГ МВД',
-                tel: 88005553535,
-                mail: 'index@index.ru',
-                job: data[0].job.title,
-                jobChar: data[0].jobChar,
-                jobType: data[0].jobType,
-                jobExpereince: data[0].jobExpereince,
+            <Button onClick={editHandler}>change access</Button>
+        {specData.isLoaded && <Form onFinish={onFinish} initialValues={{ 
+                fio: specData.fio,
+                district: specData.district.id,
+                institution: specData.institution.id,
+                phone: specData.phone,
+                email: specData.email,
+                job: specData.job.id,
+                jobChar: specData.jobChar.id,
+                jobType: specData.jobType.id,
+                jobExperience: specData.jobExperience,
                 remember: true,
         }} >
-            <EditableText descr='ФИО' text='Иван Иваныч' access={access} fieldName='fullName'/>
-            <EditableSelect descr='Район' text='Ленинский' access={access} selectArray={[{value: 'Ленинский', text: 'Ленинский'}, {value: 'Кировский', text: 'Кировский'}]}     fieldName='district' />
-            <EditableSelect descr='Организация' text='ОПГ МВД' access={access} selectArray={[{value: 'ОПГ МВД', text: 'ОПГ МВД'}, {value: 'ОПГ ФСБ', text: 'ОПГ ФСБ'}]} fieldName='organization' />
-            <EditableText descr='Телефон' text='88005553535' access={access} fieldName='tel'/>
-            <EditableText descr='Почта' text='index@index.ru' access={access} fieldName='mail'/>
-            <PairLink descr='Список специалистов организации' link='/im' text='Перейти' />
-            <Table bordered
-                pagination={false}
-                dataSource={data}
-                columns={columns}
-                />
+            <EditableText descr='ФИО' text={specData.fio} access={edit} fieldName='fio'/>
+            <EditableSelect descr='Район' text={specData.district.name} access={edit} selectArray={specData.districtsArr} fieldName='district' />
+            <EditableSelect descr='Организация' text={specData.institution.name} access={edit} selectArray={specData.institutionsArr} fieldName='institution' />
+            <EditableText descr='Телефон' text={specData.phone} access={edit} fieldName='phone'/>
+            <EditableText descr='Почта' text={specData.email} access={edit} fieldName='email'/>
+            <table>
+                <thead className="ant-table-thead">
+                    <tr>
+                        <th className="ant-table-cell">Должность</th>
+                        <th className="ant-table-cell">Характер работы</th>
+                        <th className="ant-table-cell">Вид работы</th>
+                        <th className="ant-table-cell">Стаж в должности</th>
+                    </tr>
+                </thead>
+                <tbody className="ant-table-tbody">
+                    <tr>
+                        <td>
+                        <EditableSelect descr='' text={specData.job.name} access={edit} selectArray={specData.allJobs} fieldName='job'/>
+                        </td>
+                        <td><EditableSelect descr='' text={specData.jobChar.name} access={edit} selectArray={specData.allJobChars} fieldName='jobChar'/></td>
+                        <td><EditableSelect descr='' text={specData.jobType.name} access={edit} selectArray={specData.allJobTypes} fieldName='jobType'/></td>
+                        <td><EditableNum descr='' text={specData.jobExperience} access={edit} fieldName='jobExperience'/></td>
+                    </tr>
+                </tbody>
+            </table>
                 
 
            
             
             
-            {access && <Button  type="primary" htmlType="submit">Сохранить изменения</Button>}
-        </Form>
+            {edit && <Button  type="primary" htmlType="submit">Сохранить изменения</Button>}
+        </Form>}
 
         </section>
     )

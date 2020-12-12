@@ -1,13 +1,31 @@
 import React from "react";
+import axios from "axios";
 import { Form, Input, Checkbox } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
+import {useHistory} from 'react-router-dom'
 
 import { Button, Block } from "components";
 
 function LoginForm() {
-  const onFinish = (values) => {
-    console.log("Received values of form: ", values);
+  const history = useHistory()
+  const onFinish = (data) => {
+    const formData = {};
+    var formdata = new FormData();
+    let key;
+    for (key in data) {
+      formdata.append(key, data[key]);
+    }
+    axios
+      .post("/users/enter", formdata, {
+        headers: {
+          Accept: "text/json",
+          "Content-Type": "multipart/form-data",
+        },
+      })
+      .then(function (response) {
+        history.push('/parents/view/1')
+      });
   };
 
   return (
@@ -24,7 +42,7 @@ function LoginForm() {
           onFinish={onFinish}
         >
           <Form.Item
-            name="username"
+            name="email"
             rules={[{ required: true, message: "Please input your Username!" }]}
           >
             <Input

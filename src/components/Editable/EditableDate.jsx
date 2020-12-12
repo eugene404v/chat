@@ -14,7 +14,7 @@ function EditableDate(props) {
       <Pair descr={props.descr}>{day}</Pair>
       {props.access && (
         <Form.Item name={props.fieldName} shouldUpdate>
-          <DatePicker onChange={(date, dateString) => changeHandler(dateString)} format="YYYY/MM/DD"/>
+          <DatePicker onChange={(date, dateString) => changeHandler(dateString)} placeholder={props.placeholder} format="YYYY-MM-DD"/>
         </Form.Item>
       )}
     </div>
