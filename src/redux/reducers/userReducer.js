@@ -1,8 +1,19 @@
 import axios from "axios";
 
+
+const tempId = localStorage.getItem('userId')
+let userId
+!!tempId ? userId=tempId : userId = 0
+
+const tempLvl = localStorage.getItem('userLvl')
+let userLvl
+!!tempLvl ? userLvl=tempLvl : userLvl = 0
+
 const initialState = {
   isLoaded: false,
   _user: false,
+  id: userId,
+  lvl: userLvl,
   activityPage: 1,
   usersPage: 1
 };
@@ -13,6 +24,7 @@ const userReducer = (state = initialState, action) => {
       return {
         ...state,
         ...action.data,
+        lvl: action.data.type,
         isLoaded: true,
       };
     }
@@ -48,10 +60,17 @@ const userReducer = (state = initialState, action) => {
         usersPage: action.page,
       };
     }
-    case "CLEAR_LK_USERS": {
+    case "CLEAR_LK_USERS": { 
       return {
         ...state,
         users: null,
+      };
+    }
+    case "CLEAR_ME": { 
+      return {
+        ...state,
+        id: 0,
+        lvl: false
       };
     }
     default:
@@ -67,7 +86,17 @@ export const fetchMe = () => (dispatch) => {
       },
     })
     .then(function (response) {
-      dispatch(setMe(response.data));
+      if (response.data._user.id === 0 && window.location.pathname !== '/login') {
+        window.location.replace('/login')
+      } 
+      if (response.data && response.data._user) {
+        dispatch(setMe(response.data));
+        localStorage.setItem('userId', response.data.id)
+        localStorage.setItem('userLvl', response.data.type)
+        return
+      }
+      
+      
     });
 };
 
@@ -100,7 +129,7 @@ export const clearActivity = () => {
 
 export const fetchActivity = (page) => (dispatch) => {
   axios
-    .get(`/history/lists?page=${page}`, {
+    .get(`/history/lists?page=${page}&limit=30`, {
       headers: {
         Accept: "text/json",
       },
@@ -134,7 +163,7 @@ export const setLkUsers = (array, page) => {
 
 export const fetchLkUsers = (page) => (dispatch) => {
   axios
-    .get(`/users/allUsers?page=${page}`, {
+    .get(`/users/allUsers?page=${page}&limit=30`, {
       headers: {
         Accept: "text/json",
       },
@@ -144,5 +173,12 @@ export const fetchLkUsers = (page) => (dispatch) => {
       dispatch(setLkUsers(response.data, page));
     });
 };
+
+export const clearMe = () => {
+  localStorage.removeItem('userId')
+  return {
+    type: 'CLEAR_ME'
+  }
+}
 
 export default userReducer;

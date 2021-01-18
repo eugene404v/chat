@@ -1,6 +1,6 @@
 import React from 'react'
 import axios from 'axios'
-
+import './Editable.scss'
 import { Select, Spin } from 'antd';
 import debounce from 'lodash/debounce';
 
@@ -24,7 +24,7 @@ class AsyncSelect extends React.Component {
     this.lastFetchId += 1;
     const fetchId = this.lastFetchId;
     this.setState({ data: [], fetching: true });
-    axios.get(`/${this.props.type}/searchByName?name=${value}`, {
+    axios.get(`/${this.props.type}/search?search_by=name&search=${value}`, {
         headers: {
           Accept: "text/json",
         },
@@ -33,8 +33,8 @@ class AsyncSelect extends React.Component {
           // for fetch callback order
           return;
         }
-        const tempData = data.results && data.results.map(user => ({
-          text: user.name,
+        const tempData = data.data && data.data.map(user => ({
+          text: user.fio?user.fio:user.name,
           value: user.id,
         }));
         this.setState({ data: tempData, fetching: false });
@@ -55,11 +55,13 @@ class AsyncSelect extends React.Component {
     const { fetching, data, value } = this.state;
     return (
       <Select
+      allowClear
+      className='min-select'
       disabled={this.props.disabled}
         showSearch
         labelInValue
         value={value}
-        placeholder="Select users"
+        placeholder="Поиск"
         notFoundContent={fetching ? <Spin size="small" /> : null}
         filterOption={false}
         onSearch={this.fetchUser}

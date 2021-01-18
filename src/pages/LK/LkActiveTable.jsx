@@ -3,6 +3,7 @@ import {useSelector, useDispatch} from 'react-redux'
 import { Link } from 'react-router-dom'
 import {fetchActivity} from 'redux/reducers/userReducer'
 import { Pagination } from 'antd';
+import moment from 'moment'
 
 function LkActiveTable(props) {
     const dispatch = useDispatch()
@@ -17,9 +18,9 @@ function LkActiveTable(props) {
     }
 
     return (
-        <div>
+        <div className='lk__item'>
             <h2>Отслеживание активности</h2>
-            <table>
+            <table className='LKactive'>
                 <thead>
                     <tr>
                         <th>Логин</th>
@@ -34,16 +35,16 @@ function LkActiveTable(props) {
                         return (
                             <tr>
                                 <td>{el.user && el.user.name}</td>
-                                <td>{el.user && el.user.fio}</td>
-                                <td>{el.user && el.user.district && el.user.district.name}</td>
-                                <td>{el.create_time}</td>
+                                <td>{(el.user && el.user.fio)|| 'Не указано'}</td>
+                                <td>{(el.user && el.user.district && el.user.district.name)|| 'Не указано'}</td>
+                                <td>{moment(el.create_time).format('DD-MM-YYYY hh:mm').toString()}</td>
                                 <td><Link to={`/${el.moduleName}/view/${el.objectId}`}>{el.name}</Link></td> 
                             </tr>
                         )
                     })}
                 </tbody>
             </table>
-            {activity && activity.total>10 && <Pagination defaultCurrent={activityPage} total={activity.total} onChange={paginationHandler}/>}
+            {activity && activity.total>30 && <Pagination defaultCurrent={activityPage} total={activity.total} onChange={paginationHandler} showSizeChanger={false} defaultPageSize='30'/>}
         </div>
     )
 }

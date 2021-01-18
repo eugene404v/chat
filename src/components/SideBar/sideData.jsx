@@ -1,64 +1,76 @@
-import {UserOutlined, NotificationOutlined  } from '@ant-design/icons'
+import {UserOutlined, SoundOutlined, IdcardOutlined, FolderOutlined, FileOutlined, FileTextOutlined, FolderAddOutlined, GoldOutlined  } from '@ant-design/icons'
 
 export  const sideData = [
     {
         text: 'Личный кабинет',
         link: '/cabinet',
-        icon: <UserOutlined />
+        icon: <UserOutlined/>,
+        access: true
     },
     {
         text: 'Новости',
         link: '/',
-        icon: <NotificationOutlined />
+        icon: <SoundOutlined/>,
+        access: true
     },
     {
         text: 'Карты семей',
-        link: '/lk',
-        icon: <UserOutlined />
+        link: '/familyreport',
+        icon: <IdcardOutlined />,
+        access: true
     },
     {
         text: 'Карты родителей',
-        link: '/lk',
-        icon: <UserOutlined />
+        link: '/parentsreport',
+        icon: <IdcardOutlined />,
+        access: true
     },
     {
         text: 'Карты детей',
-        link: '/lk',
-        icon: <UserOutlined />
+        link: '/childrenreports',
+        icon: <IdcardOutlined />,
+        access: true
     },
     {
         text: 'Карты учреждений',
-        link: '/lk',
-        icon: <UserOutlined />
+        link: '/instreport',
+        icon: <IdcardOutlined />,
+        access: true
     },
     {
         text: 'Карты специалистов',
-        link: '/lk',
-        icon: <UserOutlined />
+        link: '/specsreport',
+        icon: <IdcardOutlined />,
+        access: true
     },
     {
         text: 'Архивы карт',
         link: '/archives',
-        icon: <UserOutlined />
+        icon: <FolderOutlined />,
+        access: false
     },
     {
         text: 'Документы',
         link: '/documents',
-        icon: <UserOutlined />
+        icon: <FileOutlined />,
+        access: true
     },
     {
         text: 'Сводные отчеты',
-        link: '/lk',
-        icon: <UserOutlined />
+        link: '/commonreports',
+        icon: <FileTextOutlined />,
+        access: true
     },
     {
         text: 'Создать карту',
         link: '/create',
-        icon: <UserOutlined />
+        icon: <FolderAddOutlined />,
+        access: true
     },
     {
         text: 'Автосверка',
-        link: '/lk',
-        icon: <UserOutlined />
+        link: '/autocheck',
+        icon: <GoldOutlined />,
+        access: true
     },
 ]

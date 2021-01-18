@@ -1,0 +1,26 @@
+.report {
+    &__row {
+        &--error {
+            & td {background-color: rgb(255, 138, 138) !important;}
+        }
+        &--archived {
+            & td {background-color: rgb(146, 146, 146) !important;}
+        }
+    }
+    &__table {
+        margin-top: 15px;
+        & th {
+            background-color: #fff;
+            border-bottom: 1px solid #f0f0f0;
+            padding: 10px;
+            line-height: 1.3;
+        }
+        & td {
+            padding: 10px;
+        }
+    }
+    &__td--max200 {
+        width: 180px !important; 
+        padding-right: 10px !important;
+    }
+}

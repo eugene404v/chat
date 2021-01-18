@@ -1,12 +1,14 @@
 import React from "react";
-import { EditableCell, EditableRowTrigger } from "components";
+import { EditableCell, EditableRowTrigger, AsyncSelect } from "components";
 import {useSelector, useDispatch} from 'react-redux'
 import {fetchFamilyIndividualIds, refreshFamily, fetchFamily} from 'redux/reducers/familyReducer'
-import {Alert } from 'antd'
+import {Alert, Button, Input } from 'antd'
 import axios from 'axios'
+import { DownloadOutlined, DeleteOutlined, PlusSquareOutlined, EditOutlined, CheckCircleOutlined, CloseCircleOutlined   } from "@ant-design/icons";
 
 
-const EditableRow = (props) => {
+
+const EditableRow = (props) => { // редактируемая строка таблицы
   const famData = useSelector(state => state.familyReducer)
   const dispatch = useDispatch()
     const [edit, setEdit] = React.useState(false)
@@ -14,8 +16,8 @@ const EditableRow = (props) => {
     const [name, setName] = React.useState(props.name)
     const [result, setResult] = React.useState(props.result)
     const [period, setPeriod] = React.useState(props.period)
-    const [specialist, setSpecialist] = React.useState(props.specialist.fio)
-    const [specialistId, setSpecialistId] = React.useState(props.specialist.id)
+    const [specialist, setSpecialist] = React.useState( props.specialist && props.specialist.fio)
+    const [specialistId, setSpecialistId] = React.useState( props.specialist && props.specialist.id)
     const [report, setReport] = React.useState(props.report)
     const [exists, setExists] = React.useState(true)
     
@@ -42,6 +44,7 @@ const EditableRow = (props) => {
   
     const reportHandler = (e) => {
         setReport(e.target.value)
+
     }
 
     const editHandler = () => {
@@ -63,7 +66,7 @@ const EditableRow = (props) => {
     for (key in stateData){
         formdata.append(key, stateData[key])
     }
-    axios.post(`/guides/edit_item/${props.guide}/${props.id}`,formdata, {
+    axios.post(`/family/editExtendedInFamily/familyIndividual/${props.id}/${props.childId}`,formdata, {
       headers: {
         'Content-Type': 'multipart/form-data',
         'Accept': "text/json"
@@ -73,39 +76,83 @@ const EditableRow = (props) => {
       setEdit(false)
     })
     }
+
+    const onSelectHandler = (val) => {
+      setSpecialistId(val)
+      setSpecialist(val)
+    }
   
     const deleteHandler = (id) => {
       setExists(false)
-      axios.post(`/family/delExtendFromFamily/familyIndividual/${props.id}`, {}, {headers: {
+      axios.post(`/family/delExtendFromFamily/familyIndividual/${props.id}/${props.childId}/${props.tableId}`, {}, {headers: { //${props.id}/${props.childId}
         Accept: "text/json"
       }})
     }
   
     return (
-        exists && <tr index={props.id} display="table-row">
+        exists && <><tr index={props.id} display="table-row">
           <EditableCell input="true" editing={edit} onInputChange={nameHandler}>{name}</EditableCell>
           <EditableCell input="true" editing={edit} onInputChange={resultHandler}>{result}</EditableCell>
           <EditableCell input="true" editing={edit} onInputChange={periodHandler}>{period}</EditableCell>
-          <EditableCell select="true" editing={edit} selectArray={famData.familySpecsArr} onSelectChange={specialistHandler}>{specialist}</EditableCell>
+          {edit && <td><AsyncSelect type='users' onSelectChange={specialistHandler} onSelectHandler={onSelectHandler}/></td>}
+          {!edit && <td>{specialist}</td>}
           <EditableCell day="true" editing={edit} onDateChange={dayHandler}>{day}</EditableCell>
-          <EditableCell input="true" editing={edit} onInputChange={reportHandler}>{report}</EditableCell>
-          <EditableRowTrigger editing={edit} onedit={editHandler} onCancel={cancelHandler} onSave={saveHandler}/>
-          <td><button onClick={()=>deleteHandler(props.id)}>X</button></td>
+          {props.access && <EditableRowTrigger editing={edit} onedit={editHandler} onCancel={cancelHandler} onSave={saveHandler}/>}
+          {props.access && <td><Button onClick={()=>deleteHandler(props.parentId)}><DeleteOutlined /></Button></td>}
         </tr>
+        {edit &&<tr><td colSpan={6}><Input.TextArea placeholder='Текст отчета' onChange={reportHandler} defaultValue={report}></Input.TextArea></td></tr>}
+        </>
     );
   };
 
-function FamilyIndividualTable(props) {
+function FamilyIndividualTable(props) { // компонент таблицы
   const dispatch = useDispatch()
   const famData = useSelector(state => state.familyReducer)
   const [adding, setAdding] = React.useState(false)
+  const [editName, setEditName] = React.useState(false)
+    const [title, setTitle] = React.useState(props.name)
+    const [existingTable, setExistingTable] = React.useState(true)
 
   const addHandler = () => {
     famData._guideFields && dispatch(fetchFamilyIndividualIds(famData._guideFields.familyIndividual.fromId))
       setAdding(true)
   }
 
-  const NewRow = (props) => {
+  const titleEditHandler = () => {
+    setEditName(true)
+  }
+
+  const titleInputHandler = (e) => {
+    setTitle(e.target.value)
+  }
+
+  const cancelTitleHandler = () => {
+    setEditName(false)
+  }
+
+  const saveTitleHandler = () => {
+    let formdata = new FormData()
+    formdata.append('name', title)
+      axios.post(`/family/editExtendedInFamily/familyIndividual_main/${props.tableId}/${props.id}`, formdata,{
+        headers: {
+          Accept: 'text/json'
+        }
+      }).then(resp => {
+        dispatch(refreshFamily())
+      dispatch(fetchFamily(props.id))
+      })
+  }
+
+  const deleteTableHandler = () => {
+    setExistingTable(false)
+    axios.post(`/family/delExtendFromFamily/familyIndividual_main/${props.tableId}/${props.id}/`, '',{  ///family/delExtendFromFamily/familyIndividual/${props.id}/${props.childId}`
+      headers: {
+        Accept: 'text/json'
+      }
+    })
+  }
+
+  const NewRow = (props) => { // новая строка таблицы
     const [error, setError] = React.useState(false)
     const [day, setDay] = React.useState()
     const [name, setName] = React.useState()
@@ -133,7 +180,7 @@ function FamilyIndividualTable(props) {
 
     const specialistHandler = (val) => {
       setSpecialistId(val)
-      setSpecialist(famData.familySpecsArr.find(el=> el.id == val).name)
+      setSpecialist(val)
     }
   
     const reportHandler = (e) => {
@@ -148,7 +195,7 @@ function FamilyIndividualTable(props) {
       const stateData = {
         date: day, name, result, period, specialist: specialistId, report
       }
-      if ((!stateData.date)||(!stateData.name)||(!stateData.result)||(!stateData.period)||(!stateData.specialist)) {
+      if ((!stateData.name)||(!stateData.result)||(!stateData.period)||(!stateData.specialist)) {
         console.log(stateData)
         setError(true)
       } else {
@@ -159,7 +206,7 @@ function FamilyIndividualTable(props) {
         for (key in stateData){
             formdata.append(key, stateData[key])
         }
-        axios.post(`/family/addExtendedToFamily/familyIndividual/${props.id}`,formdata, { //?????????????????????????????????????????????????????????????????????
+        axios.post(`/family/addExtendedToFamily/familyIndividual/${props.id}/${props.tableId}`,formdata, { 
           headers: {
             'Content-Type': 'multipart/form-data',
             'Accept': "text/json"
@@ -172,21 +219,26 @@ function FamilyIndividualTable(props) {
       }
     }
 
+    const onSelectHandler = (val) => {
+      setSpecialistId(val)
+      setSpecialist(val)
+    }
+
     return (<>
     <tr>
     <EditableCell input="true" editing={adding} onInputChange={nameHandler} placeholder='Наименование'></EditableCell>
           <EditableCell input="true" editing={adding} onInputChange={resultHandler} placeholder='Ожидаемый результат'></EditableCell>
           <EditableCell input="true" editing={adding} onInputChange={periodHandler} placeholder='Сроки проведения'></EditableCell>
-          <EditableCell select="true" editing={adding} selectArray={famData.familySpecsArr} onSelectChange={specialistHandler} placeholder='Ответственный'></EditableCell>
+          <td><AsyncSelect type='users' onSelectChange={specialistHandler} onSelectHandler={onSelectHandler}/></td>
           <EditableCell day="true" editing={adding} onDateChange={dayHandler} placeholder='Дата проведения'></EditableCell>
-          <EditableCell input="true" editing={adding} onInputChange={reportHandler} placeholder='Отчет о проведенных мероприятиях'></EditableCell>
       <EditableRowTrigger editing={true}  onCancel={cancelHandler} onSave={saveHandler}/>
     </tr>
-    {error && <Alert message="Error" type="error" showIcon />}
+    {adding &&<tr><td colSpan={6}><Input.TextArea placeholder='Текст отчета' onChange={reportHandler} style={{minHeight: '100px'}}></Input.TextArea></td></tr>}
+    {error && <Alert message="Заполните поля" type="error" showIcon />}
     </>)
   }
 
-    const mappedRows = props.data.map((el) => {
+    const mappedRows = Array.isArray(props.data) && props.data.map((el) => {
         return <EditableRow 
         id={el.id} 
         key={el.id} 
@@ -198,28 +250,41 @@ function FamilyIndividualTable(props) {
         report={el.report}
         guide={el.guideId}
         childId={props.id}
+        access={props.access}
+        tableId={props.tableId}
          />
     })
 
     return (
-        <table>
+      existingTable && <><table>
         <thead className="ant-table-thead">
+          <tr>
+            {!editName && <th colSpan={4}><h2 style={{textAlign: 'left'}}>{props.name}</h2></th>}
+            {editName && <th colSpan={5}><Input defaultValue={props.name} className='' onChange={titleInputHandler}/></th> }
+            {!editName && <th colSpan={2}><Button onClick={titleEditHandler}><EditOutlined/>Переименовать</Button></th>}
+            {editName && <th colSpan={2} style={{display: 'flex'}}><Button onClick={saveTitleHandler}><CheckCircleOutlined/></Button><Button onClick={cancelTitleHandler}><CloseCircleOutlined/></Button></th> }
+            {!editName && <th><Button onClick={deleteTableHandler}><DeleteOutlined /></Button></th>}
+          </tr> 
           <tr>
             <th className="ant-table-cell">Наименование мероприятия</th>  
             <th className="ant-table-cell">Ожидаемый результат</th>
             <th className="ant-table-cell">Сроки проведения</th>
             <th className="ant-table-cell">Ответственный</th>
             <th className="ant-table-cell">Дата проведения мероприятия</th>
-            <th className="ant-table-cell">Отчет</th>
             <th className="ant-table-cell"></th>
+            {props.access && <th className="ant-table-cell"></th>}
           </tr>
         </thead>
         <tbody className="ant-table-tbody">
           {mappedRows}
-          {adding && <NewRow id={famData.id}/>}
-          {!adding && <button onClick={addHandler}>ADD NEW</button>}
+          {adding && <NewRow id={famData.id} tableId={props.tableId}/>}
+          
         </tbody>
     </table>
+    {!adding && <Button onClick={addHandler}><PlusSquareOutlined />Добавить</Button>}
+    <br/>
+    <br/>
+    </>
     )
 }
 

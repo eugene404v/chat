@@ -1,6 +1,7 @@
 import React from 'react'
 import {Select, Input, DatePicker, Form} from 'antd'
 import moment from 'moment'
+import './Editable.scss'
 
 function EditableCell({
     editing,
@@ -13,20 +14,20 @@ function EditableCell({
 
 
     return (
-        <td>
+        <td style={day && {whiteSpace:'nowrap'}}>
       {editing ? (
         
           <>
-          {select && <Select defaultValue={children} placeholder={placeholder} onFocus={onSelectFocus} onChange={onSelectChange} disabled={disabled}>{selectArray && selectArray.map(el=> {
+          {select && <Select className='editable--100p' defaultValue={children} placeholder={placeholder} onFocus={onSelectFocus} onChange={onSelectChange} disabled={disabled} style={{whiteSpace:'normal', maxWidth:'100%', height: 'auto'}}>{selectArray && selectArray.map(el=> {
             return (
             <Select.Option value={el.id} title={el.name}>{el.name}</Select.Option>
             )
           })}</Select>}
-          {day && <DatePicker disabled={disabled} defaultValue={children && moment(children)} placeholder={placeholder} onChange={onDateChange} allowClear={false}/>}
+          {day && <DatePicker disabled={disabled} defaultValue={children && (children !=='0000-00-00' ?  moment(children) : moment())} placeholder={placeholder} onChange={onDateChange} allowClear={false}/>}
           {input && <Input disabled={disabled} defaultValue={children} onChange={onInputChange} placeholder={placeholder} maxLength={maxLength}/>}
         </>
       ) : (
-        children
+        day ? (children !== '0000-00-00' ? moment(children).format('DD-MM-YYYY').toString():'Не указана') : children
       )}
     </td>
     )

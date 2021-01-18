@@ -2,27 +2,61 @@ import React from "react";
 import { Form, Button, Table, Spin } from "antd";
 import moment from "moment";
 import { useSelector, useDispatch } from "react-redux";
-
+import axios from 'axios'
+import { useHistory } from "react-router";
 import {
   EditableText,
   EditableDate,
-  EditableSelect
+  EditableSelect,
+  EditableCheckbox,
+  AsyncSelect
 } from "components";
 import { addInstitution, fetchSelects } from "redux/reducers/institution";
 
 
 function CreateInstitution() {
+  const history = useHistory()
   const [access, setAccess] = React.useState(true);
   const dispatch = useDispatch();
   const pageData = useSelector((state) => state.institutionReducer);
+  const [tempLead, setTempLead] = React.useState()
 
-  const onFinish = values => {
-    dispatch(addInstitution(values))
+  const onFinish = data => {
+    var formdata = new FormData();
+  let key
+  for (key in data){
+    if (key != "orderDate") {
+      formdata.append(key, data[key]);
+    } else if (key == "orderDate") {
+      formdata.append(key, moment(data[key]).format("YYYY-MM-DD").toString());
+    } 
+  }
+  formdata.append('lead', tempLead)
+  console.log(formdata.get('address'))
+  axios.post(`/institution/add`,formdata, {
+      headers: {
+        Accept: "text/json",
+        'Content-Type': 'multipart/form-data'
+      },
+    })
+    .then(function (response) {
+      if (response.data.success === true) {
+        history.push(`/institution/view/${response.data.object.id}`)
+      } else {
+        alert(response.data.info)
+      }
+    });
   };
 
   React.useEffect(()=> {
     dispatch(fetchSelects(18))
   }, [dispatch])
+
+  const onSelectHandler = (val) => {
+    setTempLead(val)
+  }
+
+  
 
   return (
     <div>
@@ -48,6 +82,7 @@ function CreateInstitution() {
           access={access}
           fieldName="fullName"
           placeholder='Полное наименование'
+          required={true} errMsg='Заполните поле'
         />
         <EditableText
           descr="Краткое наименование"
@@ -55,6 +90,7 @@ function CreateInstitution() {
           access={access}
           fieldName="name"
           placeholder='Краткое наименование'
+          required={true} errMsg='Заполните поле'
         />
         <EditableText
           descr="Адрес"
@@ -71,13 +107,60 @@ function CreateInstitution() {
           fieldName="district"
           placeholder='Укажите район'
         />
-        <EditableSelect
-          descr="Руководитель"
+        <Form.Item fieldName="lead"> 
+                <div className="editable"><div className="pair"><div className="pair__descr">Руководитель</div><div className="pair__value"></div></div>
+                    <AsyncSelect type='institution/loadUsers/leads' onSelectHandler={onSelectHandler}/>
+                </div>
+        </Form.Item> 
+        <h4>Добавить оператора</h4>
+        <EditableText
+          descr="Логин"
           text=""
           access={access}
-          selectArray={pageData.leadsArr}
-          fieldName="lead"
-          placeholder='Укажите руководителя'
+          fieldName="name"
+          placeholder='Логин'
+        />
+        <EditableText
+          descr="Пароль"
+          text=""
+          access={access}
+          fieldName="password"
+          placeholder='Пароль'
+        />
+        <EditableText
+          descr="Повторите пароль"
+          text=""
+          access={access}
+          fieldName="password_confirm"
+          placeholder='Повторите пароль'
+        />
+        <EditableText
+          descr="Почта"
+          text=""
+          access={access}
+          fieldName="email"
+          placeholder='Почта'
+        />
+        <EditableText
+          descr="Фамилия"
+          text=""
+          access={access}
+          fieldName="firstName"
+          placeholder='Фамилия'
+        />
+        <EditableText
+          descr="Имя"
+          text=""
+          access={access}
+          fieldName="lastName"
+          placeholder='Имя'
+        />
+        <EditableText
+          descr="Отчество"
+          text=""
+          access={access}
+          fieldName="middleName"
+          placeholder='Отчество'
         />
         <EditableSelect
           descr="Оператор организации"
@@ -101,7 +184,7 @@ function CreateInstitution() {
           fieldName="orderDate"
           placeholder='Дата приказа о назначении'
         />
-        <EditableText
+        <EditableCheckbox
           descr="Обязательство о неразглашении"
           text=""
           access={access}

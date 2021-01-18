@@ -1,0 +1,21 @@
+.lk {
+    &__item {
+        background-color: #fff;
+        padding: 15px;
+    }
+
+    & div {
+        overflow: visible;
+    }
+}
+
+.ant-tabs-nav {
+    margin-bottom: 0 !important;
+}
+
+.LKactive {
+    & td,
+    & th {
+        padding: 10px 20px;
+    }
+}

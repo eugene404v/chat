@@ -5,7 +5,7 @@ const initialState = {
     isLoaded: false,
   address: "no",
   district: "",
-  fullName: "WWWWWWW",
+  fullName: " ",
   name: "",
   lead: {},
   operator: {},
@@ -19,6 +19,12 @@ const institutionReducer = (state = initialState, action) => {
         ...state,
         ...action.data,
         isLoaded: true
+      };
+    }
+    case "REFRESH_INSTITUTION": {
+      return {
+        ...state,
+        isLoaded: false
       };
     }
 
@@ -35,7 +41,8 @@ export const fetchInstitution = (id) => (dispatch) => {
       },
     })
     .then(function (response) {
-      dispatch(setInstitution(response.data.source))
+      if (response.data._user) {
+        dispatch(setInstitution(response.data.source))
       dispatch(setInstitution({tableData: [{
         key:1,
         countSpecs: response.data.countSpecs,
@@ -49,8 +56,18 @@ export const fetchInstitution = (id) => (dispatch) => {
         8: response.data.countChildren.byProfs[8].count,
         9: response.data.countChildren.byProfs[9].count,
       }]}))
+      } else {
+        window.location.replace('/login')
+      }
+      
     });
 };
+
+export const refreshInstitution = () => {
+  return {
+    type: 'REFRESH_INSTITUTION'
+  }
+}
 
 export const setInstitution = (data) => {
     return {
@@ -59,17 +76,22 @@ export const setInstitution = (data) => {
     }
 }
 
-export const editInstitution = (data, id) => (dispatch) => {
+export const editInstitution = (data, id, lead) => (dispatch) => {
     const formData = {}
     var formdata = new FormData();
     let key
     for (key in data){
-      if (key != "orderDate") {
+      if (data[key] !==true && data[key] !==false) {if (key != "orderDate") {
         formdata.append(key, data[key]);
       } else if (key == "orderDate") {
         formdata.append(key, moment(data[key]).format("YYYY-MM-DD").toString());
-      } 
+      } } else if (data[key] ===true) {
+        formdata.append(key, 1);
+      }else if (data[key] ===false) {
+        formdata.append(key, 0);
+      }
     }
+    formdata.append('lead', lead)
     console.log(formdata.get('address'))
     axios.post(`/institution/edit/${id}`,formdata, {
         headers: {
@@ -79,12 +101,13 @@ export const editInstitution = (data, id) => (dispatch) => {
       })
       .then(function (response) {
         dispatch(setInstitution(response.data.source));
+        alert('Карта изменена')
       });
 }
 
 export const fetchSelects = (districtsId) => (dispatch) => {
   axios
-    .get(`/guides/list_items/${districtsId}`, {
+    .get(`/guides/list_items/${districtsId}/0/0/0/0/1`, {
       headers: {
         Accept: "text/json",
       },

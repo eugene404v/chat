@@ -1,7 +1,7 @@
 import React from "react";
 import { Form, Switch, Select } from "antd";
 
-import { Pair, EditableSelect } from "components";
+import { Pair, EditableSelect, AsyncSelect } from "components";
 import './Editable.scss'
 
 function EditableCheckboxSelect(props) {
@@ -28,7 +28,11 @@ const checkHandler = (checked, e) => {
           <Form.Item  name='asylumBoolean'>
                 <Switch onChange={checkHandler} defaultChecked={opened}></Switch>
           </Form.Item>
-          {opened && <EditableSelect text={props.text} access={props.access} selectArray={props.selectArray} fieldName={props.fieldName} />}
+          {opened && <Form.Item fieldName={props.fieldName}> 
+                <div className="editable"><div className="pair"><div className="pair__descr">Организация</div><div className="pair__value"></div></div>
+                    <AsyncSelect type='institution' onSelectHandler={props.onSelectHandler}/>
+                </div>
+            </Form.Item>}
         </div>
       )}
     </div>

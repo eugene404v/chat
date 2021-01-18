@@ -11,8 +11,9 @@ function EditableText(props) {
   };
   return (
     <div className="editable">
-      <Pair descr={props.descr}>{text}</Pair>
-      {props.access && (
+      {!props.access && <Pair descr={props.descr}>{text}</Pair>}
+      {props.access && (<>
+        <Pair descr={props.descr}></Pair>
         <Form.Item
         shouldUpdate
           name={props.fieldName}
@@ -23,9 +24,10 @@ function EditableText(props) {
             },
           ]}
         >
-          <Input defaultValue={text} onChange={(e) => changeHandler(e)} maxLength={props.maxLength} placeholder={props.placeholder}/>
+         { !props.password ? <Input defaultValue={text} onChange={(e) => changeHandler(e)} maxLength={props.maxLength} placeholder={props.placeholder}/>
+         : <Input.Password maxLength={props.maxLength} placeholder={props.placeholder} visibilityToggle/>}
         </Form.Item>
-      )}
+      </>)}
     </div>
   );
 }

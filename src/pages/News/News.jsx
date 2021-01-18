@@ -10,14 +10,18 @@ import { fetchNews} from "redux/reducers/newsReducer";
 
 
 function News() {
-  const [access, setAccess] = React.useState(true);
+  const [access, setAccess] = React.useState(false);
   const [adding, setAdding] = React.useState(false)
   const newsData = useSelector(state => state.newsReducer)
+  const userData = useSelector(state => state.userReducer)
   const dispatch = useDispatch()
 
   React.useEffect(() => {
-dispatch(fetchNews(newsData.page))
-  }, [dispatch])
+    dispatch(fetchNews(newsData.page))
+    if (userData.lvl==='admin' || userData.lvl === 'region') {
+      setAccess(true)
+    }
+  }, [dispatch, userData.lvl])
 
   const addHandler = () => {
     setAdding(true)
@@ -34,6 +38,7 @@ dispatch(fetchNews(newsData.page))
   return (<>
     {newsData.isLoaded ? 
     <section className="news">
+      <h1>Новости</h1>
       <div className="news__list">
         {Array.isArray(newsData.news) && newsData.news && newsData.news.map((el) => (
           <NewsItem
@@ -49,7 +54,7 @@ dispatch(fetchNews(newsData.page))
       </div>
       {access && !adding && <Button onClick={addHandler}>Добавить новость</Button>}
       {access && adding && <NewNewsItem onCancel={cancelHandler} />}
-      <Pagination defaultCurrent={1} total={newsData.total} onChange={paginationHandler}/>
+      <Pagination defaultCurrent={1} total={newsData.total} onChange={paginationHandler} showSizeChanger={false}/>
     </section>
     : 
     <Spin size="large" />} 

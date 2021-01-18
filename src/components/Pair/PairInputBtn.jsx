@@ -5,13 +5,14 @@ import Pair from "./Pair";
 
 function PairInputBtn(props) {
   return (
-    <Form onFinish={props.onFinish}>
+    <Form onFinish={props.onFinish} style={{display: 'flex'}}>
+      
       <Pair descr={props.descr}>
-        <Form.Item name={props.fieldName} rules={[{ required: true, message: 'Please input your username!' }]}>
+        <Form.Item name={props.fieldName} rules={[{ required: true, message: 'Пожалуйста заполните поле' }]} style={{margin: '0', marginBottom: '0'}}>
             <Input placeholder={props.placeholder}/>
         </Form.Item>
       </Pair>
-      <Button  type="primary" htmlType="submit">{props.submitText}</Button>
+      <Button   htmlType="submit">{props.submitText}</Button>
     </Form>
   );
 }

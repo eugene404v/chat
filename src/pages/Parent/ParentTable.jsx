@@ -4,17 +4,21 @@ import axios from 'axios'
 import moment from 'moment'
 import {useSelector, useDispatch} from "react-redux"
 import { fetchCrimeIds, fetchParent, refreshParent } from "redux/reducers/parentReducer";
-import {Alert} from 'antd'
+import {Alert, Button} from 'antd'
+import { DeleteOutlined, PlusSquareOutlined   } from "@ant-design/icons";
+ 
 
 const EditableRow = (props) => {
   const [edit, setEdit] = React.useState(false)
   const [initiator, setInitiator] = React.useState(props.initiator.name)
   const [initiatorId, setInitiatorId] = React.useState(props.initiator.id)
   const [day, setDay] = React.useState(props.date)
-  const [type, setType] = React.useState(props.type.name)
+  const [type, setType] = React.useState(props.type || props.type.name)
   const [crimeTypeId, setCrimeTypeId] = React.useState(props.type.id)
-  const [descr, setDescr] = React.useState(props.descr)
+  const [article, setArticle] = React.useState(props.article && props.article.name)
+  const [articleId, setArticleId] = React.useState(props.article && props.article.id)
   const [exists, setExists] = React.useState(true)
+  const [descr, setDescr] = React.useState(props.descr)
 
   const [initiatorUrl, setInititatorUrl] = React.useState(0)
   const [initiatorsArray, setInitiatorsArray] = React.useState([])
@@ -22,22 +26,30 @@ const EditableRow = (props) => {
   const [crimeTypesArray, setCrimeTypesArray] = React.useState([])
   const [crimeTypesUrl, setCrimeTypesUrl] = React.useState(0)
 
-  const descrHandler = (e) => {
-    setDescr(e.target.value)
-  }
+  const [crimeArticlesArray, setCrimeArticlesArray] = React.useState([])
+
 
   const dateHandler = (date, dateString) => {
     setDay(dateString)
   }
 
+  const descrHandler = (e) => {
+    setDescr(e.target.value)
+  }
+
   const crimeTypeHandler = (val) => {
     setCrimeTypeId(val)
-    setType(crimeTypesArray.find(el=> el.id == val).name)
+    setType(val)
   }
 
   const initiatorHandler = (val) => {
     setInitiatorId(val)
     setInitiator(initiatorsArray.find(el=> el.id == val).name)
+  }
+
+  const crimeArticlesHandler = (val) => {
+    setArticleId(val)
+    setArticle(crimeArticlesArray.find(el=> el.id == val).name)
   }
 
   const editHandler = async () => {
@@ -63,9 +75,8 @@ const EditableRow = (props) => {
   }
 
   const saveHandler = () => {
-    alert()
     const stateData = {
-      date: day, descr, type: crimeTypeId, initiator: initiatorId
+      date: day, article: articleId, type: crimeTypeId, initiator: initiatorId, descr
     }
     const formData = {}
     var formdata = new FormData();
@@ -73,7 +84,7 @@ const EditableRow = (props) => {
     for (key in stateData){
         formdata.append(key, stateData[key])
     }
-    axios.post(`/guides/edit_item/${props.guide}/${props.id}`,formdata, {
+    axios.post(`/parents/crimesEdit/${props.parentId}/${props.id}`,formdata, {
       headers: {
         'Content-Type': 'multipart/form-data',
         'Accept': "text/json"
@@ -93,7 +104,7 @@ const EditableRow = (props) => {
 
   const initiatorsSelectHandler = async () => {
     let temporalArr
-    await axios.get(`/guides/list_items/${initiatorUrl}?ignore_paging=1`, {
+    await axios.get(`/guides/list_items/${initiatorUrl}/0/0/0/0/1`, {
       headers: {
         'Content-Type': 'multipart/form-data',
         'Accept': "text/json"
@@ -120,14 +131,29 @@ const EditableRow = (props) => {
     await setCrimeTypesArray(temporalArr)
   }
 
+  const crimeArticlesSelectHandler = async () => {
+    let temporalArr
+    await axios.get(`/guides/list_items/32?ignore_paging=1`, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Accept': "text/json"
+      },
+    })
+    .then(function (response) {
+      temporalArr = response.data.data
+    })
+    await setCrimeArticlesArray(temporalArr)
+  }
+
   return (
       exists && <tr>
-        <EditableCell select="true" editing={edit} selectArray={initiatorsArray} onSelectFocus={initiatorsSelectHandler} onSelectChange={initiatorHandler}>{initiator}</EditableCell>
+        <EditableCell select="true" editing={edit} selectArray={initiatorsArray} onSelectFocus={initiatorsSelectHandler} onSelectChange={initiatorHandler} placeholder='Инициатор заполнения'>{initiator}</EditableCell>
         <EditableCell day="true" editing={edit} onDateChange={dateHandler}>{day}</EditableCell>
-        <EditableCell select="true" editing={edit} selectArray={crimeTypesArray} onSelectFocus={crimeTypesSelectHandler} onSelectChange={crimeTypeHandler}>{type}</EditableCell>
-        <EditableCell input="true" editing={edit} onInputChange={descrHandler}>{descr}</EditableCell>
-        <EditableRowTrigger editing={edit} onedit={editHandler} onCancel={cancelHandler} onSave={saveHandler}/>
-        {props.canDelete && <td><button onClick={()=>deleteHandler(props.parentId)}>X</button></td>}
+        <EditableCell select="true" editing={edit} selectArray={[{id:'Уголовное',name:'Уголовное'}, {id:'Административное',name:'Административное'}]} onSelectChange={crimeTypeHandler}>{type}</EditableCell>
+        {type==='Административное' && <EditableCell select="true" editing={edit} selectArray={crimeArticlesArray} onSelectFocus={crimeArticlesSelectHandler} onSelectChange={crimeArticlesHandler}>{article}</EditableCell>}
+        {type==='Уголовное' && <EditableCell input="true" editing={edit} onInputChange={descrHandler}>{descr}</EditableCell>}
+        {props.access && <EditableRowTrigger editing={edit} onedit={editHandler} onCancel={cancelHandler} onSave={saveHandler}/>}
+        {props.access && <td><Button onClick={()=>deleteHandler(props.parentId)}><DeleteOutlined /></Button></td>}
       </tr>
   );
 };
@@ -145,7 +171,7 @@ function ParentTable(props) {
   }
 
 const mappedRows = props.data && Array.isArray(props.data) && props.data.length>0 && props.data.map((el) => {
-    return <EditableRow id={el.id} key={el.id} initiator={el.initiator} date={el.date} type={el.type} descr={el.descr} guide={el.guideId} canDelete={props.canDelete} parentId={parentData.id}/>
+    return <EditableRow access={props.access} id={el.id} key={el.id} initiator={el.initiator} date={el.date} type={el.type} article={el.article} guide={el.guideId} canDelete={props.canDelete} parentId={parentData.id} descr={el.descr}/>
   })
 
 const NewRow = (props) => {
@@ -156,10 +182,13 @@ const NewRow = (props) => {
   const [intitiator, setInitiator] = React.useState()
   const [initiatorId, setInitiatorId] = React.useState()
   const [error, setError] = React.useState(false)
+  const [article, setArticle] = React.useState()
+  const [articleId, setArticleId] = React.useState()
+  const [crimeArticlesArray, setCrimeArticlesArray] = React.useState([])
 
   const typeHandler = (val) => {
     setCrimeTypeId(val)
-    setType(parentData.crimeTypesArr.find(el=> el.id == val).name)
+    setType(val)
   }
 
   const initiatorHandler = (val) => {
@@ -173,9 +202,9 @@ const NewRow = (props) => {
 
   const saveHandler = () => {
     const stateData = {
-      date: day, descr, type: crimeTypeId, initiator: initiatorId
+      date: day, article: articleId, type: crimeTypeId, initiator: initiatorId, descr
     }
-    if ((!stateData.date)||(!stateData.descr)||(!stateData.type)||(!stateData.initiator)) {
+    if ((!stateData.date)||(!stateData.type)||(!stateData.initiator)) {
       console.log(stateData)
       setError(true)
     } else {
@@ -200,8 +229,27 @@ const NewRow = (props) => {
     
   }
 
+  const crimeArticlesSelectHandler = async () => {
+    let temporalArr
+    await axios.get(`/guides/list_items/32?ignore_paging=1`, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Accept': "text/json"
+      },
+    })
+    .then(function (response) {
+      temporalArr = response.data.data
+    })
+    await setCrimeArticlesArray(temporalArr)
+  }
+
   const cancelHandler = () => {
     setAdding(false)
+  }
+
+  const crimeArticlesHandler = (val) => {
+    setArticleId(val)
+    setArticle(parentData.crimeArticlesArr.find(el=> el.id == val).name)
   }
 
   return (
@@ -209,11 +257,12 @@ const NewRow = (props) => {
     <tr>
       <EditableCell select="true" editing={true} selectArray={parentData.initiatorsArr} onSelectChange={initiatorHandler} placeholder='Инициатор заполнения' >{intitiator}</EditableCell>
       <EditableCell day="true" editing={true} onDateChange={(_, dateStr) => {setDay(dateStr)}} placeholder='Введите дату'></EditableCell>
-      <EditableCell select="true" editing={true} selectArray={parentData.crimeTypesArr} onSelectChange={typeHandler} placeholder='Вид'>{type}</EditableCell>
-      <EditableCell input="true" editing={true} onInputChange={descrHandler} placeholder='Статья, описание'></EditableCell>
+      <EditableCell select="true" editing={true} selectArray={[{id:'Уголовное',name:'Уголовное'}, {id:'Административное',name:'Административное'}]} onSelectChange={typeHandler} placeholder='Вид правонарушения'>{type}</EditableCell>
+      {type==='Административное' && <EditableCell select="true" editing={true} selectArray={parentData.crimeArticlesArr} onSelectFocus={crimeArticlesSelectHandler} onSelectChange={crimeArticlesHandler}>{article}</EditableCell>}
+        {type==='Уголовное' && <EditableCell input="true" editing={true} onInputChange={descrHandler}>{descr}</EditableCell>}
       <EditableRowTrigger editing={true} onCancel={cancelHandler} onSave={saveHandler}/>
     </tr>
-    {error && <Alert message="Error" type="error" showIcon />}
+    {error && <Alert message="Заполните поля" type="error" showIcon />}
     </>
 );
 }
@@ -228,15 +277,16 @@ const NewRow = (props) => {
             <th className="ant-table-cell">Вид</th>
             <th className="ant-table-cell">Статья, описание</th>
             <th className="ant-table-cell"></th>
-            <th className="ant-table-cell"></th>
+            {props.access && <th className="ant-table-cell"></th>}
           </tr>
         </thead>
         <tbody className="ant-table-tbody">
           {mappedRows}
           {adding && <NewRow id={parentData.id}/>}
-          {!adding && <button onClick={addHandler}>ADD NEW</button>}
+          
         </tbody>
-    </table>      
+    </table>    
+      {!adding && <Button onClick={addHandler}><PlusSquareOutlined />Добавить</Button>}
 </div>
   );
 }

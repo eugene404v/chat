@@ -5,16 +5,21 @@ import { useSelector, useDispatch } from "react-redux";
 import DocumentsItem from "./DocumentsItem";
 import DocumentNew from './DocumentNew'
 import { fetchDocs } from "redux/reducers/documentsReducer";
+import './Documents.scss'
 
 function Documents() {
-  const [access, setAccess] = React.useState(true);
+  const [access, setAccess] = React.useState(false);
   const [adding, setAdding] = React.useState(false);
   const docsData = useSelector((state) => state.documentsReducer);
+  const userData = useSelector(state => state.userReducer)
   const dispatch = useDispatch();
 
   React.useEffect(() => {
     dispatch(fetchDocs(docsData.page));
-  }, [dispatch, docsData.page]);
+    if (userData.lvl==='admin' || userData.lvl === 'region') {
+      setAccess(true)
+    }
+  }, [dispatch, docsData.page, userData.lvl]);
 
   const addHandler = () => {
     setAdding(true);
@@ -32,6 +37,7 @@ function Documents() {
     <>
       {docsData.isLoaded ? (
         <section className="news">
+          <h1>Документы</h1>
           <div className="news__list">
             {Array.isArray(docsData.docs) &&
               docsData.docs &&
@@ -55,6 +61,7 @@ function Documents() {
             defaultCurrent={1}
             total={docsData.total}
             onChange={paginationHandler}
+            showSizeChanger={false}
           />}
         </section>
       ) : (

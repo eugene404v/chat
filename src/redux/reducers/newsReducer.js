@@ -7,7 +7,7 @@ const initialState = {
         name: "1",
         text: "1",
         author: {fio:"1", id: 1},
-        date: "22-22-2222",
+        date: "",
       }],
       page: 1
 };
@@ -54,9 +54,14 @@ export const fetchNews = (page) => (dispatch) => {
       },
     })
     .then(function (response) {
+      if (response.data._user.id != 0) {
         dispatch(clearNews())
-      dispatch(setNews(response.data));
-      dispatch(setNewsPage(page))
+        dispatch(setNews(response.data));
+        response.data.page>0 ? dispatch(setNewsPage(page)) : dispatch(setNewsPage(1))
+      } else {
+        //window.location.replace('/login')
+      }
+        
 
     });
 };

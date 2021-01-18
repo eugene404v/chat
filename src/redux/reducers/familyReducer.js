@@ -30,40 +30,40 @@ const initialState = {
   familyMates: [
     {
       id: 65,
-      name: "Антоха",
+      name: "",
       ties: "1",
       date: "2001-11-04",
-      work: "нет",
+      work: "",
     },
   ],
 
   familySop: [
     {
       id: 2,
-      status: "forced",
+      status: "",
       dateStart: "2001-11-04",
       dateEnd: "2002-09-09",
-      reasonStart: "start",
-      reasonEnd: "end",
+      reasonStart: "",
+      reasonEnd: "",
     },
     {
       id: 33,
-      status: "Усиленный",
+      status: "",
       dateStart: "2021-01-01",
       dateEnd: "2022-01-01",
-      reasonStart: "НАЧАЛОСЬ",
-      reasonEnd: "конец",
+      reasonStart: "",
+      reasonEnd: "",
     },
   ],
 
   familyMpr: [
     {
       id: 27,
-      status: "В процессе",
+      status: " ",
       dateStart: "2071-01-05",
       dateEnd: "2062-02-02",
-      reasonStart: "початок",
-      reasonEnd: "кiнець",
+      reasonStart: "",
+      reasonEnd: "",
     },
   ],
 
@@ -71,11 +71,11 @@ const initialState = {
     {
       id: 99,
       date: "2022-10-10",
-      name: "Профилактика",
-      result: "Никакой",
-      period: "23 дня",
-      specialist: "Леха",
-      report: "Тут наши полномочия все",
+      name: "",
+      result: "",
+      period: "23 ",
+      specialist: "",
+      report: "  ",
     },
   ],
 };
@@ -83,13 +83,20 @@ const initialState = {
 const familyReducer = (state = initialState, action) => {
   switch (action.type) {
     case "SET_FAMILY": {
-      const tempParents = action.data && Array.isArray(action.data.parents ) && action.data.parents && action.data.parents.map((el) => {
-        return { ...el, type: "parent" };
+      const tempParents = action.data && Array.isArray(action.data.connected_members ) && action.data.connected_members && action.data.connected_members.map((el) => {
+        return { 
+          ...el, 
+          fio: el.parent_member.name || el.child_member.name,
+          childId: el.child_member.id || 0,
+          parentId: el.parent_member.id || 0,
+          birthDate:  el.parent_member.birthDate || el.child_member.birthDate,
+          work:  el.parent_member.work || (el.child_member.institution && el.child_member.institution.name),
+        };
       });
       const tempChildren = action.data && Array.isArray(action.data.children) && action.data.children && action.data.children.map((el) => {
         return { ...el, type: "child" }; 
       });
-      const tempMates = Array.isArray(tempChildren) && Array.isArray(tempParents) && [...tempChildren, ...tempParents];
+      const tempMates = Array.isArray(tempParents) && [...tempParents];
       return {
         ...state,
         ...action.data,
@@ -128,7 +135,11 @@ export const fetchFamily = (id) => (dispatch) => {
       },
     })
     .then(function (response) {
-      dispatch(setFamily(response.data.source));
+      if (response.data._user) {
+        dispatch(setFamily(response.data.source));
+      } else {
+        window.location.replace('/login')
+      }
     });
 };
 
@@ -170,39 +181,22 @@ export const editFamily = (data, id) => (dispatch) => {
     });
 };
 
-export const fetchFamilySopSelects = (statusId, reasonStartId, reasonEndId) => (
+export const fetchFamilySopSelects = (status) => (
   dispatch
 ) => {
   axios
-    .get(`/guides/list_items/${statusId}`, {
+    .get(`/family/loadSelect/sop?forEnd=${status}`, {
       headers: {
         Accept: "text/json",
       },
     })
     .then(function (response) {
-      dispatch(setFamily({ familySopStatusArr: response.data.data }));
-    });
-  axios
-    .get(`/guides/list_items/${reasonStartId}`, {
-      headers: {
-        Accept: "text/json",
-      },
-    })
-    .then(function (response) {
-      dispatch(setFamily({ familySopReasonStartArr: response.data.data }));
-    });
-  axios
-    .get(`/guides/list_items/${reasonEndId}`, {
-      headers: {
-        Accept: "text/json",
-      },
-    })
-    .then(function (response) {
-      dispatch(setFamily({ familySopReasonEndArr: response.data.data }));
+      dispatch(setFamily({ familySopReasonArr: response.data.data }));
+      dispatch(setFamily({ familySopStatusArr: [{name:'Поставлен', id: 'Поставлен'}, {name:'Снят', id: 'Снят'}] }));
     });
 };
 
-export const fetchFamilySopIds = (fromId) => (dispatch) => {
+export const fetchFamilySopIds = (fromId, status) => (dispatch) => {
   axios
     .get(`/guides/add_item/${fromId}`, {
       headers: {
@@ -212,47 +206,28 @@ export const fetchFamilySopIds = (fromId) => (dispatch) => {
     .then(function (response) {
       dispatch(
         fetchFamilySopSelects(
-          response.data.fields.status.fromId,
-          response.data.fields.reasonStart.fromId,
-          response.data.fields.reasonEnd.fromId
+            status
         )
       );
     });
 };
 
-export const fetchFamilyMprSelects = (statusId, reasonStartId, reasonEndId) => (
+export const fetchFamilyMprSelects = (status) => (
   dispatch
 ) => {
   axios
-    .get(`/guides/list_items/${statusId}`, {
+    .get(`/family/loadSelect/mpr?forEnd=${status}`, {
       headers: {
         Accept: "text/json",
       },
     })
     .then(function (response) {
-      dispatch(setFamily({ familyMprStatusArr: response.data.data }));
-    });
-  axios
-    .get(`/guides/list_items/${reasonStartId}`, {
-      headers: {
-        Accept: "text/json",
-      },
-    })
-    .then(function (response) {
-      dispatch(setFamily({ familyMprReasonStartArr: response.data.data }));
-    });
-  axios
-    .get(`/guides/list_items/${reasonEndId}`, {
-      headers: {
-        Accept: "text/json",
-      },
-    })
-    .then(function (response) {
-      dispatch(setFamily({ familyMprReasonEndArr: response.data.data }));
+      dispatch(setFamily({ familyMprStatusArr: [{name:'Утверждена', id: 'Утверждена'}, {name:'Прекращена', id: 'Прекращена'}] }));
+      dispatch(setFamily({ familyMprReasonArr: response.data.data }));
     });
 };
 
-export const fetchFamilyMprIds = (fromId) => (dispatch) => {
+export const fetchFamilyMprIds = (fromId, status) => (dispatch) => {
   axios
     .get(`/guides/add_item/${fromId}`, {
       headers: {
@@ -262,9 +237,7 @@ export const fetchFamilyMprIds = (fromId) => (dispatch) => {
     .then(function (response) {
       dispatch(
         fetchFamilyMprSelects(
-          response.data.fields.status.fromId,
-          response.data.fields.reasonStart.fromId,
-          response.data.fields.reasonEnd.fromId
+          status
         )
       );
     });
@@ -279,7 +252,7 @@ export const fetchFamilyIndividualSelects = (id) => (dispatch) => {
     })
     .then(function (response) {
       let tempArr = response.data.data;
-      tempArr = tempArr.map((el) => {
+      tempArr = tempArr && tempArr.map((el) => {
         return { ...el, name: el.fio };
       });
       dispatch(setFamily({ familySpecsArr: tempArr }));
@@ -296,7 +269,7 @@ export const fetchFamilyIndividualIds = (fromId) => (dispatch) => {
     .then(function (response) {
       dispatch(
         fetchFamilyIndividualSelects(
-          response.data.fields.specialist.fromId //??????????????????????????????????????????????
+          //response.data.fields.specialist.fromId //??????????????????????????????????????????????
         )
       );
     });

@@ -5,7 +5,7 @@ import {useSelector} from 'react-redux'
 
 import {EditableCheckbox, EditableSelect, PairInputBtn} from "components";
 
-function FamilyForm({onFinish, data, access}) {
+function FamilyForm({onFinish, data, access}) { //форма дополнительной информации о семье
     const famData = useSelector(state => state.familyReducer)
     return (
         <Form  onFinish={onFinish} initialValues={{ 

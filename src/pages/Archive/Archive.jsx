@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import {fetchArchives} from 'redux/reducers/archiveReducer'
 import { Button, Pagination } from 'antd';
 import axios from 'axios';
+import 'pages/Reports/reports.scss'
 
 
 function Archive() {
@@ -29,10 +30,21 @@ function Archive() {
         })
     }
 
+    const declineHandler = (id, module, el_id) => {
+        axios.get(`/archiving/returnFromArchive/${module}/${id}/${el_id}`, {headers: {accept: 'text/json'}})
+        .then((response) => {
+            if (response.data.success === true) {
+                dispatch(fetchArchives(archivesPage))
+            } else {
+                alert("Что-то пошло не так")
+            }
+        })
+    }
+
     return (
         <div>
-            <h2>Запросы на архивацию карт</h2>
-            <table>
+            <h2 style={{marginBottom: '20px'}}>Запросы на архивацию карт</h2>
+            <table  className='report__table'>
                 <thead>
                     <tr>
                         <th>Логин</th>
@@ -40,6 +52,7 @@ function Archive() {
                         <th>Обоснование</th>
                         <th>Ссылка на карту</th>
                         <th>Одобрить запрос</th>
+                        <th>Отклонить запрос</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -51,6 +64,7 @@ function Archive() {
                                 <td>{el.descr}</td>
                                 <td><Link to={`/${el.moduleName}/view/${el.object_id}`}>{el.name}</Link></td> 
                                 <td><Button onClick={()=>approveHandler(el.id)}>Одобрить</Button></td>
+                                <td><Button onClick={()=>declineHandler(el.object_id, el.moduleName, el.id)}>Отклонить</Button></td>
                             </tr>
                         )
                     })}

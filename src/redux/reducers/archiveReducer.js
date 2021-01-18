@@ -46,9 +46,14 @@ export const setArchives = (array, page) => {
           Accept: "text/json",
         },
       })
-      .then(function (response) {
-        dispatch(clearArchives());
-        dispatch(setArchives(response.data, page));
+      .then(function (response) { 
+        if (response.data._user) {
+          dispatch(clearArchives());
+          dispatch(setArchives(response.data, page));
+        } else {
+          window.location.replace('/login')
+        }
+        
       });
   };
 

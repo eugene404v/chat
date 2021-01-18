@@ -1,0 +1,31 @@
+.documents__delete {
+    margin-left: auto;
+    margin-right: 0;
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+}
+
+.documents__item {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.documents__title {
+    margin-bottom: 10px;
+}
+
+.documents__btn {
+    margin-bottom: 5px;
+
+    & a {
+        margin-left: 10px;
+        color: rgba(0, 0, 0, 0.85);
+    }
+
+    &:hover a {
+        color: #40a9ff;
+    }
+}

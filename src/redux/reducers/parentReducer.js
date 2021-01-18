@@ -4,14 +4,14 @@ import moment from "moment";
 const initialState = {
   isLoaded: false,
 
-  birthDate: "2005/11/11",
-  addressReg: "pushkin street",
-  addressFact: "kolotushkin house",
+  birthDate: "2005-11-11",
+  addressReg: " ",
+  addressFact: " ",
   documentType: 1,
-  documentIssuedBy: "dfkhbjsadkhb",
+  documentIssuedBy: "",
   documentNumber: 24,
-  documentIssuedDate: "2005/11/11",
-  work: "devOps",
+  documentIssuedDate: "2005-11-11",
+  work: "",
   district: { name: "", id: "" },
   alcoholism: true,
   drugs: true,
@@ -22,17 +22,10 @@ const initialState = {
   crimes: [
     {
       id: 1,
-      initiator: { id: 1, name: "ГУВД Области" },
+      initiator: { id: 1, name: " " },
       date: "2012-04-11",
-      type: { id: 1, name: "Крупное хулиганство" },
-      descr: "Ст 24 УК РФ - Крупное хулиганство",
-    },
-    {
-      id: 2,
-      initiator: { id: 2, name: "ГУВД Города" },
-      date: "2022-07-01",
-      type: { id: 2, name: "Мелкое хулиганство" },
-      descr: "Ст 22 УК РФ - Мелкое хулиганство",
+      type: { id: 1, name: " " },
+      descr: "",
     },
   ],
   guideId: 13,
@@ -90,7 +83,11 @@ export const fetchParent = (id) => (dispatch) => {
       },
     })
     .then(function (response) {
-      dispatch(setParent(response.data));
+      if (response.data._user) {
+        dispatch(setParent(response.data));
+      } else {
+        window.location.replace('/login')
+      }
     });
 };
 
@@ -131,7 +128,8 @@ export const editParent = (data, id) => (dispatch) => {
       },
     })
     .then(function (response) {
-      dispatch(setParent(response.data.source));
+      dispatch(refreshParent());
+      dispatch(fetchParent(id));
     });
 };
 
@@ -146,7 +144,7 @@ export const fetchSelects = (docsId, districtsId) => (dispatch) => {
       dispatch(setParent({ source: { docsArr: response.data.data } }));
     });
   axios
-    .get(`/guides/list_items/${districtsId}`, {
+    .get(`/guides/list_items/${districtsId}/0/0/0/0/1`, {
       headers: {
         Accept: "text/json",
       },
@@ -158,7 +156,7 @@ export const fetchSelects = (docsId, districtsId) => (dispatch) => {
 
 export const fetchCrimesSelects = (initId, typesId) => (dispatch) => {
   axios
-    .get(`/guides/list_items/${initId}`, {
+    .get(`/guides/list_items/${initId}/0/0/0/0/1`, {
       headers: {
         Accept: "text/json",
       },
@@ -175,6 +173,15 @@ export const fetchCrimesSelects = (initId, typesId) => (dispatch) => {
     .then(function (response) {
       dispatch(setParent({ source: { crimeTypesArr: response.data.data } }));
     });
+  axios
+    .get(`/guides/list_items/32`, {
+      headers: {
+        Accept: "text/json",
+      },
+    })
+    .then(function (response) {
+      dispatch(setParent({ source: { crimeArticlesArr: response.data.data } }));
+    });
 };
 
 export const fetchCrimeIds = (guide) => (dispatch) => {
@@ -188,7 +195,8 @@ export const fetchCrimeIds = (guide) => (dispatch) => {
       dispatch(
         fetchCrimesSelects(
           response.data.fields.initiator.fromId,
-          response.data.fields.type.fromId
+          response.data.fields.type.fromId,
+          response.data.fields.article.fromId
         )
       );
     });

@@ -2,48 +2,47 @@ import React from "react";
 import { EditableCell, EditableRowTrigger } from "components";
 import {useSelector, useDispatch} from 'react-redux'
 import {fetchFamilySopIds, refreshFamily, fetchFamily} from 'redux/reducers/familyReducer'
-import {Alert } from 'antd'
+import {Alert, Button} from 'antd'
 import axios from 'axios'
+import { DeleteOutlined, PlusSquareOutlined   } from "@ant-design/icons";
+
 
 const EditableRow = (props) => {
   const famData = useSelector(state => state.familyReducer)
   const dispatch = useDispatch()
   const [edit, setEdit] = React.useState(false);
-  const [status, setStatus] = React.useState(props.status && props.status.name);
+  const [status, setStatus] = React.useState(props.status && props.status);
   const [statusId, setStatusId] = React.useState(props.status && props.status.id);
-  const [dayStart, setDayStart] = React.useState(props.dateStart);
-  const [dayEnd, setDayEnd] = React.useState(props.dateEnd);
-  const [reasonStart, setReasonStart] = React.useState(props.reasonStart && props.reasonStart.name);
-  const [reasonStartId, setReasonStartId] = React.useState(props.reasonStart && props.reasonStart.id);
-  const [reasonEnd, setReasonEnd] = React.useState(props.reasonEnd && props.reasonEnd.name);
-  const [reasonEndId, setReasonEndId] = React.useState(props.reasonEnd && props.reasonEnd.id);
+  const [day, setDay] = React.useState(props.date);
+  const [reason, setReason] = React.useState(props.reason && props.reason.name);
+  const [reasonId, setReasonId] = React.useState(props.reason && props.reason.id);
   const [exists, setExists] = React.useState(true);
+  const [tempStatus, setTempStatus] = React.useState(props.status === 'Поставлен'?0:1)
 
   const statusHandler = (val) => {
     setStatusId(val)
-    setStatus(famData.familySopStatusArr.find(el=> el.id == val).name)
+    setStatus(val)
+    setTempStatus(val === 'Поставлен'?0:1)
+    
   };
 
-  const dayStartHandler = (_, dateString) => {
-    setDayStart(dateString);
+  const focusHandler = () => {
+    famData._guideFields && dispatch(fetchFamilySopIds(famData._guideFields.familySop.fromId, tempStatus))
+  }
+
+  const dayHandler = (_, dateString) => {
+    setDay(dateString);
   };
 
-  const dayEndHandler = (_, dateString) => {
-    setDayEnd(dateString);
+
+  const reasonHandler = (val) => {
+    setReasonId(val)
+    setReason(famData.familySopReasonArr.find(el=> el.id == val).name)
   };
 
-  const reasonStartHandler = (val) => {
-    setReasonStartId(val)
-    setReasonStart(famData.familySopReasonStartArr.find(el=> el.id == val).name)
-  };
-
-  const reasonEndHandler = (val) => {
-    setReasonEndId(val)
-    setReasonEnd(famData.familySopReasonEndArr.find(el=> el.id == val).name)
-  };
 
   const editHandler = () => {
-    famData._guideFields && dispatch(fetchFamilySopIds(famData._guideFields.familySop.fromId))
+    famData._guideFields && dispatch(fetchFamilySopIds(famData._guideFields.familySop.fromId, tempStatus))
     setEdit(true);
   };
 
@@ -53,7 +52,7 @@ const EditableRow = (props) => {
 
   const saveHandler = () => {
     const stateData = {
-      status: statusId, dateStart: dayStart, dateEnd: dayEnd, reasonStart: reasonStartId, reasonEnd: reasonEndId
+      status: statusId, date: day, reason: reasonId
     }
     const formData = {}
     var formdata = new FormData();
@@ -61,7 +60,7 @@ const EditableRow = (props) => {
     for (key in stateData){
         formdata.append(key, stateData[key])
     }
-    axios.post(`/guides/edit_item/${props.guide}/${props.id}`,formdata, {
+    axios.post(`/family/editExtendedInFamily/familySop/${props.id}/${props.childId}`,formdata, {
       headers: {
         'Content-Type': 'multipart/form-data',
         'Accept': "text/json"
@@ -74,23 +73,19 @@ const EditableRow = (props) => {
 
   const deleteHandler = (id) => {
     setExists(false);
-    axios.post(`/family/delExtendFromFamily/familySop/${props.id}`, {}, {headers: {
+    axios.post(`/family/delExtendFromFamily/familySop/${props.id}/${props.childId}`, {}, {headers: {
       Accept: "text/json"
     }})
   };
 
   return (
     exists && (
-      <tr index={props.id} display="table-row">
+      <tr>
         <EditableCell select="true" editing={edit} selectArray={famData.familySopStatusArr} onSelectChange={statusHandler}>{status}</EditableCell>
-        <EditableCell day="true" editing={edit}  onDateChange={dayStartHandler}>{dayStart}</EditableCell>
-        <EditableCell day="true" editing={edit} onDateChange={dayEndHandler}>{dayEnd}</EditableCell>
-        <EditableCell select="true" editing={edit} selectArray={famData.familySopReasonStartArr} onSelectChange={reasonStartHandler}>{reasonStart}</EditableCell>
-        <EditableCell select="true" editing={edit} selectArray={famData.familySopReasonEndArr} onSelectChange={reasonEndHandler}>{reasonEnd}</EditableCell>
-        <EditableRowTrigger editing={edit} onedit={editHandler} onCancel={cancelHandler} onSave={saveHandler}/>
-        <td>
-          <button onClick={() => deleteHandler(props.id)}>X</button>
-        </td>
+        <EditableCell day="true" editing={edit}  onDateChange={dayHandler}>{day}</EditableCell>
+        <EditableCell select="true" editing={edit} selectArray={famData.familySopReasonArr} onSelectFocus={focusHandler} onSelectChange={reasonHandler}>{reason}</EditableCell>
+        {props.access && <EditableRowTrigger editing={edit} onedit={editHandler} onCancel={cancelHandler} onSave={saveHandler}/>}
+        {props.access && <td><Button onClick={()=>deleteHandler(props.parentId)}><DeleteOutlined /></Button></td>}
       </tr>
     )
   );
@@ -100,9 +95,10 @@ function FamilySopTable(props) {
   const dispatch = useDispatch()
   const famData = useSelector(state => state.familyReducer)
   const [adding, setAdding] = React.useState(false)
+  
 
   const addHandler = () => {
-    famData._guideFields && dispatch(fetchFamilySopIds(famData._guideFields.familySop.fromId))
+    //famData._guideFields && dispatch(fetchFamilySopIds(famData._guideFields.familySop.fromId, tempStatus))
       setAdding(true)
     }
 
@@ -110,35 +106,30 @@ function FamilySopTable(props) {
       const [error, setError] = React.useState(false)
       const [status, setStatus] = React.useState();
       const [statusId, setStatusId] = React.useState();
-      const [dayStart, setDayStart] = React.useState();
-      const [dayEnd, setDayEnd] = React.useState();
-      const [reasonStart, setReasonStart] = React.useState();
-      const [reasonStartId, setReasonStartId] = React.useState();
-      const [reasonEnd, setReasonEnd] = React.useState();
-      const [reasonEndId, setReasonEndId] = React.useState();
+      const [day, setDay] = React.useState();
+      const [reason, setReason] = React.useState();
+      const [reasonId, setReasonId] = React.useState();
+      const [sopIds, setSopIds] = React.useState();
+      const [tempStatus, setTempStatus] = React.useState()
+      const [arr, setArr] = React.useState()
+      
+
+
   
-      const statusHandler = (val) => {
-        setStatusId(val)
-        setStatus(famData.familySopStatusArr.find(el=> el.id == val).name)
+      
+    
+      const dayHandler = (_, dateString) => {
+        setDay(dateString);
       };
     
-      const dayStartHandler = (_, dateString) => {
-        setDayStart(dateString);
+
+    
+      const reasonHandler = (val) => {
+        setReasonId(val)
+        setReason(arr.find(el=> el.id == val).name)
       };
     
-      const dayEndHandler = (_, dateString) => {
-        setDayEnd(dateString);
-      };
-    
-      const reasonStartHandler = (val) => {
-        setReasonStartId(val)
-        setReasonStart(famData.familySopReasonStartArr.find(el=> el.id == val).name)
-      };
-    
-      const reasonEndHandler = (val) => {
-        setReasonEndId(val)
-        setReasonEnd(famData.familySopReasonEndArr.find(el=> el.id == val).name)
-      };    
+
     
       const cancelHandler = () => {
         setAdding(false)
@@ -146,9 +137,9 @@ function FamilySopTable(props) {
     
       const saveHandler = () => {
         const stateData = {
-          status: statusId, dateStart: dayStart, dateEnd: dayEnd, reasonStart: reasonStartId, reasonEnd: reasonEndId
+          status: statusId, date: day, reason: reasonId
         }
-        if ((!stateData.status)||(!stateData.dateStart)||(!stateData.dateEnd)||(!stateData.reasonStart)||(!stateData.reasonEnd)) {
+        if ((!stateData.status)||(!stateData.date)||(!stateData.reason)) {
           console.log(stateData)
           setError(true)
         } else {
@@ -171,54 +162,86 @@ function FamilySopTable(props) {
           })
         }
       }
+
+      const statusHandler = (val) => {
+        setStatusId(val)
+        setStatus(val)
+        setTempStatus(val === 'Поставлен'?0:1)
+
+        //famData._guideFields && dispatch(fetchFamilySopIds(famData._guideFields.familySop.fromId, tempStatus))
+       /*alert(tempStatus)
+          axios
+          .get(`/family/loadSelect/sop?forEnd=${tempStatus}`, {
+            headers: {
+              Accept: "text/json",
+            },
+          })
+          .then(function (response) {
+           // dispatch(setFamily({ familySopReasonArr: response.data.data }));
+            //dispatch(setFamily({ familySopStatusArr: [{name:'Поставлен', id: 'Поставлен'}, {name:'Снят', id: 'Снят'}] }));
+          });
+       */
+      };
+
+      const focusHandler = () => {
+        axios
+        .get(`/family/loadSelect/sop?forEnd=${tempStatus}`, {
+          headers: {
+            Accept: "text/json",
+          },
+        })
+        .then(function (response) {
+          setArr(response.data.data)
+        });
+      }
   
       return (<>
       <tr>
-        <EditableCell select="true" editing={adding} selectArray={famData.familySopStatusArr} onSelectChange={statusHandler} placeholder='Статус'></EditableCell>
-        <EditableCell day="true" editing={adding}  onDateChange={dayStartHandler} placeholder='Дата постановки'></EditableCell>
-        <EditableCell day="true" editing={adding} onDateChange={dayEndHandler} placeholder='Дата снятия'></EditableCell>
-        <EditableCell select="true" editing={adding} selectArray={famData.familySopReasonStartArr} onSelectChange={reasonStartHandler} placeholder='Основания постановки'></EditableCell>
-        <EditableCell select="true" editing={adding} selectArray={famData.familySopReasonEndArr} onSelectChange={reasonEndHandler} placeholder='Основания снятия'></EditableCell>
+        <EditableCell select="true" editing={adding} selectArray={[{name:'Поставлен', id: 'Поставлен'}, {name:'Снят', id: 'Снят'}] } onSelectChange={statusHandler} placeholder='Статус'></EditableCell>
+        <EditableCell day="true" editing={adding}  onDateChange={dayHandler} placeholder='Дата '></EditableCell>
+        <EditableCell select="true" editing={adding} selectArray={arr} onSelectFocus={focusHandler} onSelectChange={reasonHandler} placeholder='Основания ' disabled={!statusId}></EditableCell>
         <EditableRowTrigger editing={true}  onCancel={cancelHandler} onSave={saveHandler}/>
       </tr>
-      {error && <Alert message="Error" type="error" showIcon />}
+      {error && <Alert message="Заполните поля" type="error" showIcon />}
       </>)
     }
 
-  const mappedRows = props.data.map((el, i) => {
+  const mappedRows = Array.isArray(props.data) && props.data.map((el, i) => {
     return <EditableRow 
         id={el.id} 
         key={el.id} 
         type={el.type} 
         status={el.status}
-        dateStart={el.dateStart} 
-        dateEnd={el.dateEnd} 
-        reasonStart={el.reasonStart}
-        reasonEnd={el.reasonEnd}  
+        date={el.date}  
+        reason={el.reason}
         guide={el.guideId}
         childId={props.id}
+        access={props.access}
          />
   });
 
-  return (
+  return (<>
     <table>
       <thead className="ant-table-thead">
         <tr>
           <th className="ant-table-cell">Статус</th>
-          <th className="ant-table-cell">Дата постановки на учет</th>
-          <th className="ant-table-cell">Дата снятия с учета</th>
-          <th className="ant-table-cell">Основания постановки</th>
-          <th className="ant-table-cell">Основания снятия</th>
+          <th className="ant-table-cell">Дата постановки/снятия</th>
+          <th className="ant-table-cell">Основания постановки/снятия</th>
           <th className="ant-table-cell"></th>
+          {props.access && <th className="ant-table-cell"></th>}
         </tr>
       </thead>
       <tbody className="ant-table-tbody">
         {mappedRows}
         {adding && <NewRow id={famData.id}/>}
-        {!adding && <button onClick={addHandler}>ADD NEW</button>}
+        
       </tbody>
     </table>
+    {!adding && <Button onClick={addHandler}><PlusSquareOutlined />Добавить</Button>}
+    </>
   );
 }
 
 export default FamilySopTable;
+
+

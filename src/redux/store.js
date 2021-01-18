@@ -9,6 +9,13 @@ import newsReducer from './reducers/newsReducer'
 import userReducer from './reducers/userReducer'
 import documentsReducer from './reducers/documentsReducer'
 import archiveReducer from './reducers/archiveReducer'
+import reportsReducer from './reducers/reportsReducer'
+import childrenReportReducer from './reducers/childrenReportReducer'
+import familyReportReducer from './reducers/familyReportReducer'
+import parentsReportReducer from './reducers/parentsReportReducer'
+import instReportReducer from './reducers/instReportReducer'
+import specsReportReducer from './reducers/specsReportReducer'
+import autocheckReducer from './reducers/autocheckReducer'
 import thunk from 'redux-thunk';
 
 const rootReducer = combineReducers({
@@ -21,7 +28,14 @@ const rootReducer = combineReducers({
   newsReducer,
   userReducer,
   documentsReducer,
-  archiveReducer
+  archiveReducer,
+  reportsReducer,
+  childrenReportReducer,
+  familyReportReducer,
+  parentsReportReducer,
+  specsReportReducer,
+  instReportReducer,
+  autocheckReducer,
 })
 
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;

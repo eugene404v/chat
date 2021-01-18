@@ -50,7 +50,7 @@ function DocumentNew(props) {
             <input type="file" onChange={fileHandler}/>
             <Button onClick={saveHandler}>Сохранить</Button>
             <Button onClick={props.cancelHandler}>Отмена</Button>
-            {error && <Alert message="Error" type="error" showIcon />}
+            {error && <Alert message="Заполните поля" type="error" showIcon />}
         </div>
     )
 }

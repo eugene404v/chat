@@ -6,9 +6,12 @@ import { Link } from "react-router-dom";
 import {useHistory} from 'react-router-dom'
 
 import { Button, Block } from "components";
+import { useDispatch } from "react-redux";
+import {fetchMe} from 'redux/reducers/userReducer'
 
 function LoginForm() {
   const history = useHistory()
+  const  dispatch = useDispatch()
   const onFinish = (data) => {
     const formData = {};
     var formdata = new FormData();
@@ -24,7 +27,13 @@ function LoginForm() {
         },
       })
       .then(function (response) {
-        history.push('/parents/view/1')
+        if (response.data.success === true) {
+          dispatch(fetchMe())
+          history.push('/')
+        } else {
+          alert(response.data.info)
+        }
+        
       });
   };
 
@@ -43,23 +52,25 @@ function LoginForm() {
         >
           <Form.Item
             name="email"
-            rules={[{ required: true, message: "Please input your Username!" }]}
+            rules={[{ required: true, message: "Пожалуйста введите свой логин!" }]}
           >
             <Input
               prefix={<UserOutlined className="site-form-item-icon" />}
-              placeholder="Username"
+              placeholder="Логин"
               size="large"
+              autoComplete='off'
             />
           </Form.Item>
           <Form.Item
             name="password"
-            rules={[{ required: true, message: "Please input your Password!" }]}
+            rules={[{ required: true, message: "Пожалуйста, введите свой пароль!" }]}
           >
-            <Input
+            <Input.Password
               prefix={<LockOutlined className="site-form-item-icon" />}
-              type="password"
-              placeholder="Password"
+              placeholder="Пароль"
               size="large"
+              visibilityToggle={true}
+              autoComplete='off'
             />
           </Form.Item>
 
@@ -73,9 +84,7 @@ function LoginForm() {
             </Button>
           </Form.Item>
         </Form>
-        <Link to="/register" className="auth__registerlink">
-          Зарегистрироваться
-        </Link>
+
       </Block>
     </div>
   );

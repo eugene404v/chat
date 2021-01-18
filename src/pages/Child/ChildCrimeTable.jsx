@@ -2,8 +2,9 @@ import React from "react";
 import { EditableCell, EditableRowTrigger } from "components";
 import {useSelector, useDispatch} from 'react-redux'
 import {fetchCrimeIds, refreshChild, fetchChild} from 'redux/reducers/childReducer'
-import {Alert } from 'antd'
+import {Alert, Button } from 'antd'
 import axios from 'axios'
+import { DeleteOutlined, PlusSquareOutlined   } from "@ant-design/icons";
 
 
 const EditableRow = (props) => {
@@ -11,10 +12,11 @@ const EditableRow = (props) => {
   const childData = useSelector(state => state.childReducer)
     const [edit, setEdit] = React.useState(false)
     const [day, setDay] = React.useState(props.date)
-    const [type, setType] = React.useState(props.type.name)
-    const [typeId, setTypeId] = React.useState(props.type.id)
-    const [article, setArticle] = React.useState(props.article.name)
-    const [articleId, setArticleId] = React.useState(props.article.id)
+    const [type, setType] = React.useState(props.type || props.type.name)
+    const [typeId, setTypeId] = React.useState(props.type && props.type.id)
+    const [article, setArticle] = React.useState(props.article && props.article.name)
+    const [articleId, setArticleId] = React.useState(props.article && props.article.id)
+    const [articleType, setArticleType] = React.useState(props.article && props.article.for_type)
     const [descr, setDescr] = React.useState(props.descr)
     const [exists, setExists] = React.useState(true)
 
@@ -39,7 +41,7 @@ const EditableRow = (props) => {
     }
   
     const editHandler = () => {
-      childData._guideFields && dispatch(fetchCrimeIds(childData._guideFields.childCrimes.fromId))
+      childData._guideFields && dispatch(fetchCrimeIds(childData._guideFields.childCrimes.fromId, type))
       setEdit(true)
       }
     
@@ -49,7 +51,7 @@ const EditableRow = (props) => {
   
     const saveHandler = () => {
         const stateData = {
-          date: day, type: typeId, article: articleId, descr
+          date: day, type: typeId, article: articleId, article_text: descr
         }
         const formData = {}
         var formdata = new FormData();
@@ -57,7 +59,7 @@ const EditableRow = (props) => {
         for (key in stateData){
             formdata.append(key, stateData[key])
         }
-        axios.post(`/guides/edit_item/${props.guide}/${props.id}`,formdata, {
+        axios.post(`/children/editExtendedInChild/crimes/${props.id}/${props.childId}`,formdata, {
           headers: {
             'Content-Type': 'multipart/form-data',
             'Accept': "text/json"
@@ -73,16 +75,16 @@ const EditableRow = (props) => {
         axios.post(`/children/delExtendFromChild/crimes/${props.id}/${props.childId}`, {}, {headers: {
           Accept: "text/json"
         }})
-      }
+      } 
   
     return (
         exists && <tr index={props.id} display="table-row">
           <EditableCell day="true" editing={edit}  onDateChange={dayHandler}>{day}</EditableCell>
-          <EditableCell select="true" editing={edit} selectArray={childData.crimeTypesArr} onSelectChange={typeHandler}>{type}</EditableCell>
+          <EditableCell select="true" editing={edit} selectArray={childData.crimeTypesArr} onSelectChange={typeHandler}>{typeof(type)==='string'?type:(type && type.name)}</EditableCell>
           <EditableCell select="true" editing={edit} selectArray={childData.crimeArticlesArr} onSelectChange={articleHandler}>{article}</EditableCell>
-          <EditableCell input="true" editing={edit} onInputChange={descrHandler}>{descr}</EditableCell>
-          <EditableRowTrigger editing={edit} onedit={editHandler} onCancel={cancelHandler} onSave={saveHandler}/>
-          <td><button onClick={deleteHandler}>X</button></td>
+          <EditableCell disabled={(type==='Административное' || typeId==='Административное') && articleId!=15} input="true" editing={edit} onInputChange={descrHandler}>{descr}</EditableCell>
+          {props.access && <EditableRowTrigger editing={edit} onedit={editHandler} onCancel={cancelHandler} onSave={saveHandler}/>}
+          {props.access && <td><Button onClick={()=>deleteHandler(props.parentId)}><DeleteOutlined /></Button></td>}
         </tr>
     );
   };
@@ -93,7 +95,7 @@ function ChildCrimeTable(props) {
   const [adding, setAdding] = React.useState(false)
 
   const addHandler = () => {
-    childData._guideFields && dispatch(fetchCrimeIds(childData._guideFields.childCrimes.fromId))
+    childData._guideFields && dispatch(fetchCrimeIds(childData._guideFields.childCrimes.fromId, 'Административное'))
       setAdding(true)
     }
 
@@ -113,6 +115,7 @@ function ChildCrimeTable(props) {
       const typeHandler = (val) => {
           setTypeId(val)
           setType(childData.crimeTypesArr.find(el=> el.id == val).name)
+          val !== 'Административное' && setArticle('') && setArticleId('')
       }
     
       const articleHandler = (val) => {
@@ -129,10 +132,11 @@ function ChildCrimeTable(props) {
       }
     
       const saveHandler = () => {
+        
         const stateData = {
-          date: day, type: typeId, article: articleId, descr
-        }
-        if ((!stateData.type)||(!stateData.date)||(!stateData.article)||(!stateData.descr)) {
+          date: day, type: typeId, article: articleId, article_text: !descr?'':descr
+        } 
+        if ((!stateData.type)||(!stateData.date)) {
           console.log(stateData)
           setError(true)
         } else {
@@ -160,11 +164,11 @@ function ChildCrimeTable(props) {
       <tr>
       <EditableCell day="true" editing={adding}  onDateChange={dayHandler} placeholder='Укажите дату'>{day}</EditableCell>
           <EditableCell select="true" editing={adding} selectArray={childData.crimeTypesArr} onSelectChange={typeHandler} placeholder='Выберите тип'></EditableCell>
-          <EditableCell select="true" editing={adding} selectArray={childData.crimeArticlesArr} onSelectChange={articleHandler} placeholder='Выберите статью'></EditableCell>
-          <EditableCell input="true" editing={adding} onInputChange={descrHandler} placeholder='Краткое описание' maxLength={60}></EditableCell>
+          <EditableCell disabled={(type!=='Административное' || typeId!=='Административное')}select="true" editing={adding} selectArray={childData.crimeArticlesArr} onSelectChange={articleHandler} placeholder='Выберите статью'></EditableCell>
+          <EditableCell disabled={(type==='Административное' || typeId==='Административное') && articleId!=15}input="true" editing={adding} onInputChange={descrHandler} placeholder='Краткое описание' maxLength={60}></EditableCell>
           <EditableRowTrigger editing={true} onCancel={cancelHandler} onSave={saveHandler}/>
       </tr>
-      {error && <Alert message="Error" type="error" showIcon />}
+      {error && <Alert message="Заполните поля" type="error" showIcon />}
       </>)
     }
 
@@ -175,13 +179,14 @@ function ChildCrimeTable(props) {
         date={el.date}
         type={el.type} 
         article={el.article}
-        descr={el.descr}
+        descr={el.article_text}
         guide={el.guideId}
         childId={childData.id}
+        access={props.access}
          />
     })
 
-    return (
+    return (<>
         <table>
         <thead className="ant-table-thead">
           <tr>
@@ -190,15 +195,17 @@ function ChildCrimeTable(props) {
             <th className="ant-table-cell">Статья</th>
             <th className="ant-table-cell">Краткое описание</th>
             <th className="ant-table-cell"></th>
+            {props.access && <th className="ant-table-cell"></th>}
           </tr>
         </thead>
         <tbody className="ant-table-tbody">
           {mappedRows}
           {adding && <NewRow id={childData.id}/>}
-          {!adding && <button onClick={addHandler}>ADD NEW</button>}
+          
         </tbody>
     </table>
-    )
+    {!adding && <Button onClick={addHandler}><PlusSquareOutlined />Добавить</Button>}
+    </>)
 }
 
 export default ChildCrimeTable

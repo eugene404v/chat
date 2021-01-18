@@ -1,3 +1,18 @@
 .editable {
     display: flex;
+    &__select {
+        min-width: 220px;
+        width: 100%;
+    }
+    &--100p {
+        width: 100%;
+    }
+}
+
+.min-select {
+    width: 220px !important;
+}
+
+.editable--dn {
+    display: none;
 }

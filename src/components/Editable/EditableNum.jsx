@@ -11,8 +11,9 @@ function EditableNum(props) {
   };
   return (
     <div className="editable">
-      <Pair descr={props.descr}>{text}</Pair>
-      {props.access && (
+      {!props.access && <Pair descr={props.descr}>{text}</Pair>}
+      {props.access && (<>
+        <Pair descr={props.descr}></Pair>
         <Form.Item
           name={props.fieldName}
           rules={[
@@ -24,7 +25,7 @@ function EditableNum(props) {
         >
           <InputNumber defaultValue={text} onChange={(e) => changeHandler(e)} />
         </Form.Item>
-      )}
+      </>)}
     </div>
   );
 }

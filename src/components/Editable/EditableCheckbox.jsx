@@ -17,13 +17,13 @@ const checkHandler = (checked, e) => {
 }
 
   return (
-    <div className="editable">
-      <Pair descr={props.descr}>{answer}</Pair>
-      {props.access && (
+    <div className={`editable ${!props.initialBoolean && !props.access && 'editable--dn'}`}>
+      {!props.access && props.initialBoolean && <Pair descr={props.descr}>{answer}</Pair>}
+      {props.access && (<><Pair descr={props.descr}>{answer}</Pair>
         <Form.Item name={props.fieldName} shouldUpdate valuePropName={'checked'}>
           <Switch onChange={checkHandler} />
         </Form.Item>
-      )}
+      </>)}
     </div>
   );
 }

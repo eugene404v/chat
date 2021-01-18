@@ -2,6 +2,7 @@ import { Button } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons';
 import React from 'react'
 import axios from 'axios'
+import moment from 'moment'
 import {useDispatch, useSelector} from 'react-redux'
 import { refreshDocs, fetchDocs } from 'redux/reducers/documentsReducer'
 
@@ -20,12 +21,12 @@ function DocumentsItem(props) {
 
     return (
         <li className='documents__item'>
-            <h2 className="documents__title">{props.name}</h2>
-            <Button type="primary" icon={<DownloadOutlined />}>
-                <a href={`/files/download/${props.file}`} download>Скачать</a>
+            <h3 className="documents__title">{props.name}</h3>
+            <Button icon={<DownloadOutlined/>} className='documents__btn'>
+                <a href={`/files/download/${props.file}`} download>Скачать</a> 
             </Button>
-            <p>{props.date}</p>
-            {props.access && <Button onClick={deleteHandler}>Удалить документ</Button>}
+            <p>{moment(props.date).format('DD-MM-YYYY').toString()}</p>
+            {props.access && <Button onClick={deleteHandler} className='documents__delete'>Удалить документ</Button>}
         </li>
     )
 }

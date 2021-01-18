@@ -54,10 +54,14 @@ export const fetchDocs = (page) => (dispatch) => {
       },
     })
     .then(function (response) {
-        dispatch(clearDocs())
-      dispatch(setDocs(response.data));
-      dispatch(setDocsPage(page))
 
+      if (response.data._user) {
+        dispatch(clearDocs())
+        dispatch(setDocs(response.data));
+        dispatch(setDocsPage(page))
+      } else {
+        window.location.replace('/login')
+      }
     });
 };
 

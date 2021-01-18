@@ -8,7 +8,8 @@ import {
   addParent,
   fetchSelects,
 } from "redux/reducers/parentReducer";
-
+import { useHistory } from "react-router";
+import axios from 'axios'
 import {
   EditableText,
   EditableDate,
@@ -18,6 +19,7 @@ import {
 } from "components";
 
 function CreateParent() {
+  const history = useHistory()
   const [edit, setEdit] = React.useState(true);
   const dispatch = useDispatch();
   const parentData = useSelector((state) => state.parentReducer);
@@ -27,8 +29,35 @@ function CreateParent() {
     dispatch(fetchSelects(19, 18));
   }, [dispatch]);
 
-  const onFinish = (values) => {
-    dispatch(addParent(values));
+  const onFinish = (data) => {
+    var formdata = new FormData();
+  let key;
+  for (key in data) {
+    if (key != "birthDate" && key != "documentIssuedDate") {
+      formdata.append(key, data[key]);
+    } else if (key == "birthDate" || key == "documentIssuedDate") {
+      formdata.append(key, moment(data[key]).format("YYYY-MM-DD").toString());
+    } 
+    if (data[key]===true) {
+      formdata.append(key, 1);
+    } else if (data[key]===false) {
+      formdata.append(key, 0);
+    }
+  }
+  axios
+    .post(`/parents/add`, formdata, {
+      headers: {
+        Accept: "text/json",
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    .then(function (response) {
+      if (response.data.success === true) {
+        history.push(`/parents/view/${response.data.object.id}`)
+      } else {
+        alert(response.data.info)
+      }
+    });
   };
 
   return (
@@ -38,7 +67,9 @@ function CreateParent() {
         <Form
           onFinish={onFinish}
           initialValues={{
-            name: '',
+            last_name: '',
+            first_name: '',
+            middle_name: '',
             birthDate: '',
             addressReg: '',
             addressFact: '',
@@ -56,17 +87,15 @@ function CreateParent() {
             prison: false,
           }}
         >
-          <EditableText
-            descr="ФИО"
-            text=''
-            access={edit}
-            fieldName="name"
-          />
+          <EditableText descr='Фамилия' text='' access={edit} fieldName='last_name' required={true} errMsg='Заполните поле'/>
+            <EditableText descr='Имя' text='' access={edit} fieldName='first_name' required={true} errMsg='Заполните поле'/>
+            <EditableText descr='Отчество' text='' access={edit} fieldName='middle_name' required={true} errMsg='Заполните поле'/>
           <EditableDate
             descr="Дата рождения"
             day=''
             access={edit}
             fieldName="birthDate"
+            required={true}
           />
           <EditableText
             descr="Занятость"

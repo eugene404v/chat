@@ -1,0 +1,21 @@
+.errors {
+    border: 2px solid red;
+    border-radius: 3px;
+    padding: 5px;
+    margin-bottom: 15px;
+
+    &__list {
+        margin-top: 5px;
+    }
+
+    &__title {
+        position: relative;
+        padding-left: 25px;
+        color: red;
+    }
+
+    &__icon {
+        position: absolute;
+        left: 0;
+    }
+}

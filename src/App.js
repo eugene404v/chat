@@ -4,18 +4,22 @@ import "App.scss";
 import { Auth, AppLayout} from "pages";
 import { Provider } from "react-redux";
 import store from 'redux/store'
+import { ConfigProvider } from 'antd';
+import ruRU from 'antd/lib/locale/ru_RU';
+
 
 
 function App() {
   return (
-    <Provider store={store}>
+    <ConfigProvider locale={ruRU}>
+      <Provider store={store}>
       <BrowserRouter>
-        <div className="app">
+        <div>
           <Route exact path={"/login"} component={Auth} />
           <Route path={"/"} component={AppLayout} />
         </div>
       </BrowserRouter>
-    </Provider>
+    </Provider></ConfigProvider>
   );
 }
 

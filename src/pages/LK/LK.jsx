@@ -6,15 +6,21 @@ import LkActiveTable from "./LkActiveTable";
 import LkProfileTab from "./LkProfileTab";
 import LkReports from "./LkReports";
 import LkUsersList from "./LkUsersList";
-
+import './LK.scss'
 
 
 function LK() {
-  const [access, setAccess] = React.useState(true);
+  const [access, setAccess] = React.useState(false);
   const userData = useSelector(state => state.userReducer)
 
+  React.useEffect(() => {
+    if (userData.lvl==='admin' || userData.lvl === 'region'|| userData.lvl === 'master'|| userData.lvl === 'curator') {
+      setAccess(true)
+    }
+}, [userData.lvl])
+
   return (
-    <div>
+    <div className='lk'>
       <Tabs defaultActiveKey="1" type="card" size="large">
         <Tabs.TabPane tab="Профиль" key="1">
           <LkProfileTab fio={userData.fio} inst={userData.institution && userData.institution.name} userId={userData.id} instId={userData.institution && userData.institution.id} level={userData.type}/>

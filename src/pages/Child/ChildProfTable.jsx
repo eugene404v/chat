@@ -1,8 +1,10 @@
 import React from "react";
 import { EditableCell, EditableRowTrigger } from "components";
 import {useSelector, useDispatch} from 'react-redux'
-import {fetchProfIds, refreshChild, fetchChild} from 'redux/reducers/childReducer'
-import {Alert } from 'antd'
+import {fetchProfIds, refreshChild, fetchChild, fetchProfSelectLast} from 'redux/reducers/childReducer'
+import {fetchProfSelectLastNew} from 'redux/reducers/childTempReducer'
+import {Alert, Button } from 'antd'
+import { DeleteOutlined, PlusSquareOutlined   } from "@ant-design/icons";
 import axios from 'axios'
 
 const EditableRow = (props) => {
@@ -11,14 +13,12 @@ const EditableRow = (props) => {
   const [edit, setEdit] = React.useState(false)
   const [type, setType] = React.useState(props.type.name)
   const [typeId, setTypeId] = React.useState(props.type.id)
-  const [status, setStatus] = React.useState(props.status.name)
+  const [status, setStatus] = React.useState(props.status)
   const [statusId, setStatusId] = React.useState(props.status.id)
-  const [dayStart, setDayStart] = React.useState(props.dateStart)
-  const [dayEnd, setDayEnd] = React.useState(props.dateEnd)
-  const [reasonStart, setReasonStart] = React.useState(props.reasonStart.name)
-  const [reasonStartId, setReasonStartId] = React.useState(props.reasonStart.id)
-  const [reasonEnd, setReasonEnd] = React.useState(props.reasonEnd.name)
-  const [reasonEndId, setReasonEndId] = React.useState(props.reasonEnd.id)
+  const [day, setDay] = React.useState(props.date)
+  const [reason, setReason] = React.useState(props.reason && props.reason.name)
+  const [reasonId, setReasonId] = React.useState(props.reason && props.reason.id)
+
 
   const [exists, setExists] = React.useState(true)
 
@@ -32,22 +32,14 @@ const EditableRow = (props) => {
     setStatus(childData.statusArr.find(el=> el.id == val).name)
   }
 
-  const dayStartHandler = (_, dateString) => {
-    setDayStart(dateString)
+  const dayHandler = (_, dateString) => {
+    setDay(dateString)
   }
 
-  const dayEndHandler = (_, dateString) => {
-    setDayEnd(dateString)
-  }
 
-  const reasonStartHandler = (val) => {
-    setReasonStartId(val)
-    setReasonStart(childData.reasonStartArr.find(el=> el.id == val).name)
-  }
-
-  const reasonEndHandler = (val) => {
-    setReasonEndId(val)
-    setReasonEnd(childData.reasonEndArr.find(el=> el.id == val).name)
+  const reasonHandler = (val) => {
+    setReasonId(val)
+    setReason(childData.reasonArr.find(el=> el.id == val).name)
   }
 
   const editHandler = () => {
@@ -61,7 +53,7 @@ const EditableRow = (props) => {
 
   const saveHandler = () => {
     const stateData = {
-      type: typeId, status: statusId, dateStart: dayStart, dateEnd: dayEnd, reasonStart: reasonStartId, reasonEnd: reasonEndId
+      type: typeId, status: statusId, date: day, reason: reasonId
     }
     const formData = {}
     var formdata = new FormData();
@@ -69,7 +61,7 @@ const EditableRow = (props) => {
     for (key in stateData){
         formdata.append(key, stateData[key])
     }
-    axios.post(`/guides/edit_item/${props.guide}/${props.id}`,formdata, {
+    axios.post(`/children/editExtendedInChild/profs/${props.id}/${props.childId}`,formdata, {
       headers: {
         'Content-Type': 'multipart/form-data',
         'Accept': "text/json"
@@ -87,16 +79,18 @@ const EditableRow = (props) => {
     }})
   }
 
+  const loadReasonsHandler = () => {
+    dispatch(fetchProfSelectLast(status, typeId))
+  }
+
   return (
       exists && <tr index={props.id}>
         <EditableCell select="true" editing={edit} selectArray={childData.typesArr} onSelectChange={typeHandler}>{type}</EditableCell>
-        <EditableCell select="true" editing={edit} selectArray={childData.statusArr} onSelectChange={statusHandler}>{status}</EditableCell>
-        <EditableCell day="true" editing={edit} onDateChange={dayStartHandler}>{dayStart}</EditableCell>
-        <EditableCell day="true" editing={edit} onDateChange={dayEndHandler}>{dayEnd}</EditableCell>
-        <EditableCell select="true" editing={edit} selectArray={childData.reasonStartArr} onSelectChange={reasonStartHandler}>{reasonStart}</EditableCell>
-        <EditableCell select="true" editing={edit} selectArray={childData.reasonEndArr} onSelectChange={reasonEndHandler}>{reasonEnd}</EditableCell>
-        <EditableRowTrigger editing={edit} onedit={editHandler} onCancel={cancelHandler} onSave={saveHandler}/>
-        <td><button onClick={()=>deleteHandler(props.childId)}>X</button></td>
+        <EditableCell select="true" editing={edit} selectArray={childData.statusArr}   onSelectChange={statusHandler}>{status}</EditableCell>
+        <EditableCell day="true" editing={edit} onDateChange={dayHandler}>{day}</EditableCell>
+        <EditableCell select="true" editing={edit} selectArray={childData.reasonArr} onSelectFocus={loadReasonsHandler} onSelectChange={reasonHandler}>{reason}</EditableCell>
+        {props.access && <EditableRowTrigger editing={edit} onedit={editHandler} onCancel={cancelHandler} onSave={saveHandler}/>}
+        {props.access && <td><Button onClick={()=>deleteHandler(props.parentId)}><DeleteOutlined /></Button></td>}
       </tr>
   );
 };
@@ -105,6 +99,7 @@ const EditableRow = (props) => {
 function ChildProfTable(props) {
   const dispatch = useDispatch()
   const childData = useSelector(state => state.childReducer)
+  const childTempData  = useSelector(state => state.childTempReducer)
   const [adding, setAdding] = React.useState(false)
 
   const addHandler = () => {
@@ -118,53 +113,50 @@ function ChildProfTable(props) {
     const [typeId, setTypeId] = React.useState()
     const [status, setStatus] = React.useState()
     const [statusId, setStatusId] = React.useState()
-    const [dayStart, setDayStart] = React.useState()
-    const [dayEnd, setDayEnd] = React.useState()
-    const [reasonStart, setReasonStart] = React.useState()
-    const [reasonStartId, setReasonStartId] = React.useState()
-    const [reasonEnd, setReasonEnd] = React.useState()
-    const [reasonEndId, setReasonEndId] = React.useState()
+    const [day, setDay] = React.useState()
+    const [reason, setReason] = React.useState()
+    const [reasonId, setReasonId] = React.useState()
+    const [reasons, setReasons] = React.useState([])
+    const [reasonStart, setReasonStart] = React.useState([])
+
 
     
   
     const typeHandler = (val) => {
       setTypeId(val)
       setType(childData.typesArr.find(el=> el.id == val).name)
+      // dispatch(fetchProfSelectLastNew(status, typeId))
     }
   
     const statusHandler = (val) => {
       setStatusId(val)
       setStatus(childData.statusArr.find(el=> el.id == val).name)
+      
+    }
+
+  
+    const dayHandler = (_, dateString) => {
+      setDay(dateString)
+    }
+
+  
+    const reasonHandler = (val) => {
+      setReasonId(val)
+      setReasonStart(reasons.find(el=> el.id == val).name)
+      setReason(reasons.find(el=> el.id == val).name)
     }
   
-    const dayStartHandler = (_, dateString) => {
-      setDayStart(dateString)
-    }
-  
-    const dayEndHandler = (_, dateString) => {
-      setDayEnd(dateString)
-    }
-  
-    const reasonStartHandler = (val) => {
-      setReasonStartId(val)
-      setReasonStart(childData.reasonStartArr.find(el=> el.id == val).name)
-    }
-  
-    const reasonEndHandler = (val) => {
-      setReasonEndId(val)
-      setReasonEnd(childData.reasonEndArr.find(el=> el.id == val).name)
-    }
-  
+
     const cancelHandler = () => {
       setAdding(false)
+      
     }
   
     const saveHandler = () => {
       const stateData = {
-        type: typeId, status: statusId, dateStart: dayStart, dateEnd: dayEnd, reasonStart: reasonStartId, reasonEnd: reasonEndId
+        type: typeId, status: statusId, date: day,  reason: reasonId
       }
-      if ((!stateData.type)||(!stateData.status)||(!stateData.dateStart)||(!stateData.dateEnd)||(!stateData.reasonStart)||(!stateData.reasonEnd)) {
-        console.log(stateData)
+      if ((!stateData.type)||(!stateData.status)||(!stateData.date)||(!stateData.reason)) {
         setError(true)
       } else {
         dispatch(refreshChild())
@@ -186,55 +178,61 @@ function ChildProfTable(props) {
         })
       }
     }
-
+    const loadReasonsHandler = () => {
+      const start = status === 'Поставлен' ? 0 : 1;
+      axios.get(`/children/loadSelect/prof?forEnd=${start}&profType=${typeId}`, {
+        headers: {
+          Accept: "text/json",
+        },
+      })
+      .then(response => setReasons([...response.data.data]))
+    }
+// disabled={!typeId}
     return (<>
     <tr>
         <EditableCell select="true" editing={adding} onSelectChange={typeHandler} selectArray={childData.typesArr} placeholder='Выберите вид'></EditableCell>
         <EditableCell select="true" editing={adding} onSelectChange={statusHandler} selectArray={childData.statusArr} placeholder='Выберите статус'></EditableCell>
-        <EditableCell day="true" editing={adding} onDateChange={dayStartHandler} placeholder='Укажите дату'></EditableCell>
-        <EditableCell day="true" editing={adding} onDateChange={dayEndHandler} placeholder='Укажите дату'></EditableCell>
-        <EditableCell select="true" editing={adding} onSelectChange={reasonStartHandler} selectArray={childData.reasonStartArr} placeholder='Выберите причину'></EditableCell>
-        <EditableCell select="true" editing={adding} onSelectChange={reasonEndHandler}  selectArray={childData.reasonEndArr} placeholder='Выберите причину'></EditableCell>
+        <EditableCell day="true" editing={adding} onDateChange={dayHandler} placeholder='Укажите дату'></EditableCell>
+        <EditableCell select="true" editing={adding} onSelectChange={reasonHandler} onSelectFocus={loadReasonsHandler} selectArray={reasons} placeholder='Выберите причину' disabled={!status || !typeId}></EditableCell>
         <EditableRowTrigger editing={true}  onCancel={cancelHandler} onSave={saveHandler}/>
     </tr>
-    {error && <Alert message="Error" type="error" showIcon />}
+    {error && <Alert message="Заполните поля" type="error" showIcon />} 
     </>)
   }
-    const mappedRows =  props.data && (Array.isArray(props.data)===true) && props.data.map((el) => {
-        return <EditableRow 
-        id={el.id} 
-        key={el.id} 
-        type={el.type} 
-        status={el.status}
-        dateStart={el.dateStart} 
-        dateEnd={el.dateEnd} 
-        reasonStart={el.reasonStart}
-        reasonEnd={el.reasonEnd}  
-        guide={el.guideId}
-        childId={props.id}
-         />
-    })
+  const mappedRows =  Array.isArray(props.data) && props.data.map((el) => {
+    return <EditableRow 
+    id={el.id} 
+    key={el.id} 
+    type={el.type} 
+    status={el.status}
+    date={el.date} 
+    reason={el.reason}
+    guide={el.guideId}
+    childId={props.id}
+    access={props.access}
+     />
+})
 
-    return (
+    return (<>
         <table>
         <thead className="ant-table-thead">
           <tr>
             <th className="ant-table-cell">Вид</th>
             <th className="ant-table-cell">Статус</th>
-            <th className="ant-table-cell">Дата постановки</th>
-            <th className="ant-table-cell">Дата снятия</th>
-            <th className="ant-table-cell">Причина постановки</th>
-            <th className="ant-table-cell">Причина снятия</th>
+            <th className="ant-table-cell">Дата постановки/снятия</th>
+            <th className="ant-table-cell">Причина постановки/снятия</th>
             <th className="ant-table-cell"></th>
+            {props.access && <th className="ant-table-cell"></th>}
           </tr>
         </thead>
         <tbody className="ant-table-tbody">
           {mappedRows}
           {adding && <NewRow id={childData.id}/>}
-          {!adding && <button onClick={addHandler}>ADD NEW</button>}
+          
         </tbody>
     </table>
-    )
+    {!adding && <Button onClick={addHandler}><PlusSquareOutlined />Добавить</Button>}
+    </>)
 }
 
 export default ChildProfTable

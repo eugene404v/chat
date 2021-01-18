@@ -2,15 +2,16 @@ import React from "react";
 import { EditableCell, EditableRowTrigger } from "components";
 import {useSelector, useDispatch} from 'react-redux'
 import {fetchWorkIds, refreshChild, fetchChild} from 'redux/reducers/childReducer'
-import {Alert } from 'antd'
+import {Alert, Button } from 'antd'
+import { DeleteOutlined, PlusSquareOutlined   } from "@ant-design/icons";
 import axios from 'axios'
 
 const EditableRow = (props) => {
     const dispatch = useDispatch()
     const childData = useSelector(state => state.childReducer)
     const [edit, setEdit] = React.useState(false)
-    const [type, setType] = React.useState(props.type.name)
-    const [typeId, setTypeId] = React.useState(props.type.id)
+    const [type, setType] = React.useState(props.type || props.type.name)
+    const [typeId, setTypeId] = React.useState(props.type || props.type.id)
     const [place, setPlace] = React.useState(props.place)
     const [dayStart, setDayStart] = React.useState(props.dateStart)
     const [dayEnd, setDayEnd] = React.useState(props.dateEnd)
@@ -18,7 +19,7 @@ const EditableRow = (props) => {
   
     const typeHandler = (val) => {
       setTypeId(val)
-      setType(childData.workTypesArr.find(el=> el.id == val).name)
+      setType(val)
     }
     
     const dayStartHandler = (date, dateString) => {
@@ -52,7 +53,7 @@ const EditableRow = (props) => {
         for (key in stateData){
             formdata.append(key, stateData[key])
         }
-        axios.post(`/guides/edit_item/${props.guide}/${props.id}`,formdata, {
+        axios.post(`/children/editExtendedInChild/works/${props.id}/${props.childId}`,formdata, {
           headers: {
             'Content-Type': 'multipart/form-data',
             'Accept': "text/json"
@@ -69,15 +70,17 @@ const EditableRow = (props) => {
         Accept: "text/json"
       }})
     }
-  
+    
+    
+    
     return (
         exists && <tr index={props.id} display="table-row">
-          <EditableCell select="true" editing={edit} selectArray={childData.workTypesArr}  onSelectChange={typeHandler}>{type}</EditableCell>
+          <EditableCell select="true" editing={edit} selectArray={[{id:'Трудоустройство', name:'Трудоустройство'},{id:'Дополнительное образование', name:'Дополнительное образование'},{id:'Общественное объединение', name:'Общественное объединение'}]}  onSelectChange={typeHandler}>{type}</EditableCell>
           <EditableCell day="true" editing={edit} onDateChange={dayStartHandler}>{dayStart}</EditableCell>
           <EditableCell day="true" editing={edit} onDateChange={dayEndHandler}>{dayEnd}</EditableCell>
           <EditableCell input="true" editing={edit} onInputChange={placeHandler} maxLength={180}>{place}</EditableCell>
-          <EditableRowTrigger editing={edit} onedit={editHandler} onCancel={cancelHandler} onSave={saveHandler}/>
-          <td><button onClick={()=>deleteHandler(props.id)}>X</button></td>
+          {props.access && <EditableRowTrigger editing={edit} onedit={editHandler} onCancel={cancelHandler} onSave={saveHandler}/>}
+          {props.access && <td><Button onClick={()=>deleteHandler(props.parentId)}><DeleteOutlined /></Button></td>}
         </tr>
     );
   };
@@ -103,7 +106,7 @@ function ChildWorkTable(props) {
       
     const typeHandler = (val) => {
       setTypeId(val)
-      setType(childData.workTypesArr.find(el=> el.id == val).name)
+      setType(val)
     }
     
     const dayStartHandler = (date, dateString) => {
@@ -152,13 +155,13 @@ function ChildWorkTable(props) {
   
       return (<>
       <tr>
-      <EditableCell select="true" editing={adding} selectArray={childData.workTypesArr}  placeholder='Вид работы' onSelectChange={typeHandler}></EditableCell>
+      <EditableCell select="true" editing={adding} selectArray={[{id:'Трудоустройство', name:'Трудоустройство'},{id:'Дополнительное образование', name:'Дополнительное образование'},{id:'Общественное объединение', name:'Общественное объединение'}]}  placeholder='Вид работы' onSelectChange={typeHandler}></EditableCell>
           <EditableCell day="true" editing={adding} onDateChange={dayStartHandler}  placeholder='Начало работы'></EditableCell>
           <EditableCell day="true" editing={adding} onDateChange={dayEndHandler} placeholder='Конец работы'></EditableCell>
           <EditableCell input="true" editing={adding} onInputChange={placeHandler} maxLength={180} placeholder='Место работы'></EditableCell>
           <EditableRowTrigger editing={true} onCancel={cancelHandler} onSave={saveHandler}/>
       </tr>
-      {error && <Alert message="Error" type="error" showIcon />}
+      {error && <Alert message="Заполните поля" type="error" showIcon />}
       </>)
     }
 
@@ -172,10 +175,11 @@ function ChildWorkTable(props) {
         place={el.place}
         guide={el.guideId} 
         childId={childData.id}
+        access={props.access}
          />
     })
 
-    return (
+    return (<>
         <table>
         <thead className="ant-table-thead">
           <tr>
@@ -184,15 +188,17 @@ function ChildWorkTable(props) {
             <th className="ant-table-cell">Дата окончания</th>
             <th className="ant-table-cell">Наименование учреждения, организующего занятость (должность, направление, секция)</th>
             <th className="ant-table-cell"></th>
+            {props.access && <th className="ant-table-cell"></th>}
           </tr>
         </thead>
         <tbody className="ant-table-tbody">
           {mappedRows}
           {adding && <NewRow id={childData.id}/>}
-          {!adding && <button onClick={addHandler}>ADD NEW</button>}
+          
         </tbody>
     </table>
-    )
+    {!adding && <Button onClick={addHandler}><PlusSquareOutlined />Добавить</Button>}
+    </>)
 }
 
 export default ChildWorkTable

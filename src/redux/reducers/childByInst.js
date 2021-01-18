@@ -29,7 +29,11 @@ export const fetchChildByInst = (id) => (dispatch) => {
       },
     })
     .then(function (response) {
-      dispatch(setChildByInst(response.data));
+      if (response.data._user) {
+        dispatch(setChildByInst(response.data));
+      } else {
+        window.location.replace('/login')
+      }
     });
 };
 

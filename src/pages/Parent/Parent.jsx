@@ -6,8 +6,9 @@ import {useParams} from 'react-router-dom'
 import {useSelector, useDispatch} from 'react-redux'
 import {fetchParent, refreshParent, editParent, fetchSelects} from 'redux/reducers/parentReducer'
 
-import {EditableText, EditableDate, EditableSelect, PairLink, EditableNum, EditableCheckbox, PairInputBtn} from "components";
+import {EditableText, EditableDate, EditableSelect, PairLink, EditableNum, EditableCheckbox, PairInputBtn, ErrorsList} from "components";
 import ParentTable from './ParentTable'
+import { EditOutlined } from "@ant-design/icons";
 
 
 
@@ -19,11 +20,16 @@ const urlId = useParams().id
 const [edit, setEdit] = React.useState(false)
 const dispatch = useDispatch()
 const parentData = useSelector(state => state.parentReducer)
+const userData = useSelector(state => state.userReducer)
+const [access, setAccess] = React.useState(false)
 
 React.useEffect(() => {
     dispatch(refreshParent())
     dispatch(fetchParent(urlId))
-}, [dispatch, urlId])
+    if (userData.lvl==='admin' || userData.lvl === 'region'|| userData.lvl === 'master'|| userData.lvl === 'curator') {
+      setAccess(true)
+    }
+}, [dispatch, urlId, userData.lvl])
 
 const editHandler = () => {
   if (edit === false) {
@@ -57,20 +63,28 @@ const archiveHandler = (data) => {
 
 const onFinish = values => {
   dispatch(editParent(values, urlId))
+  setEdit(false)
 };
+
+const unArchiveHandler = () => {
+  axios.post(`/archiving/returnFromArchive/parents/${urlId}`, '', {headers: {Accept: 'text/json'}})
+  .then(resp => alert(resp.data.info))
+}
 
   return (
     <section className="home">
       <h1>КАРТА РОДИТЕЛЯ</h1> 
-
-      {parentData.canDelRows &&<Button onClick={editHandler}>EDIT</Button>}
+      {Array.isArray(parentData._errors) && parentData._errors.length>0 && <ErrorsList list={parentData._errors}/>}
+      {access &&<Button onClick={editHandler}><EditOutlined/>Редактировать</Button>}
 {parentData.isLoaded && <Form  onFinish={onFinish} initialValues={{ 
-      name: parentData.name,
+  last_name: parentData.name.split(' ')[0],
+      first_name: parentData.name.split(' ')[1],
+      middle_name: parentData.name.split(' ')[2],
       birthDate: moment(parentData.birthDate),
       addressReg: parentData.addressReg,
       addressFact: parentData.addressFact,
 work: parentData.work,
-      documentType: parentData.documentType.id,
+      documentType: 1,
 documentIssuedBy: parentData.documentIssuedBy,
 documentNumber: parentData.documentNumber,
 documentIssuedDate: moment(parentData.documentIssuedDate),
@@ -87,13 +101,15 @@ documentIssuedDate: moment(parentData.documentIssuedDate),
 
       }} >
 
-      <EditableText descr='ФИО' text={parentData.name} access={edit} fieldName='name'/>
-      <EditableDate descr='Дата рождения' day={moment(parentData.birthDate).format('YYYY.MM.DD').toString()} access={edit} fieldName='birthDate'/>
+      <EditableText descr='Фамилия' text={parentData.name.split(' ')[0]} access={edit} fieldName='last_name' required={true} errMsg='Заполните поле'/>
+      <EditableText descr='Имя' text={parentData.name.split(' ')[1]} access={edit} fieldName='first_name' required={true} errMsg='Заполните поле'/>
+      <EditableText descr='Отчество' text={parentData.name.split(' ')[2]} access={edit} fieldName='middle_name' required={true} errMsg='Заполните поле'/>
+      <EditableDate descr='Дата рождения' day={moment(parentData.birthDate).format('YYYY.MM.DD').toString()} access={edit} fieldName='birthDate'  required={true}/>
       <EditableText descr='Занятость' text={parentData.work} access={edit} fieldName='work'/>
       <EditableText descr='Адрес регистрации' text={parentData.addressReg} access={edit} fieldName='addressReg'/>
       <EditableText descr='Адрес фактического проживания' text={parentData.addressFact} access={edit} fieldName='addressFact'/>
 
-      <EditableSelect descr='Документ удостоверяющий личность' text={parentData.documentType.name} access={edit} selectArray={parentData.docsArr} fieldName='documentType' />
+      <EditableText descr='Документ удостоверяющий личность' disabled={true} text='Паспорт' access={false} fieldName='documentType' />
       <EditableText descr='Документ выдан' text={parentData.documentIssuedBy} access={edit} fieldName='documentIssuedBy'/>
       <EditableText descr='Номер и серия документа' text={parentData.documentNumber} access={edit} fieldName='documentNumber'/>
       <EditableDate descr='Дата выдачи документа' day={moment(parentData.documentIssuedDate).format('YYYY.MM.DD').toString()} access={edit} fieldName='documentIssuedDate'/>
@@ -115,11 +131,17 @@ documentIssuedDate: moment(parentData.documentIssuedDate),
 
       {edit && <Button  type="primary" htmlType="submit">Сохранить изменения</Button>}
     </Form>}
-    {parentData.isLoaded && <ParentTable data={parentData.crimes} guide={parentData._guideFields.crimes.fromId} id={urlId} canDelete={parentData.canDelRows} />}
+    <h2>Правонарушения</h2>
+    {parentData.isLoaded && parentData.crimes && <ParentTable access={access} data={parentData.crimes} guide={parentData._guideFields && parentData._guideFields.crimes.fromId} id={urlId} canDelete={parentData.canDelRows} />}
 
     
       
-      <PairInputBtn onFinish={archiveHandler} fieldName='descr' descr='Запрос на архивацию карты' placeholder='Разъясните причину' submitText='Отправить запрос' />
+
+
+    <br/>
+      <br/>
+      <br/>
+      {access && (parentData.archived != 2 ? <PairInputBtn onFinish={archiveHandler} fieldName='descr' descr='Запрос на архивацию карты' placeholder='Разъясните причину' submitText='Отправить запрос' /> : <Button onClick={unArchiveHandler}>Вернуть из архива</Button>)}
     </section>
   );
 }

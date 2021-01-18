@@ -2,11 +2,12 @@ import React from 'react'
 import {Link} from 'react-router-dom'
 
 function SideBarItem(props) {
-    return (
-        <li className="sidebar__li" style={{color: '#5DADF6'}}>
+    return (<>
+        {props.access && <li className="sidebar__li">
             {props.icon}
-            <Link to={props.link} style={{color: '#5DADF6'}}>{props.text}</Link>
-        </li>
+            <Link to={props.link} className='sidebar__link'>{props.text}</Link>
+        </li>}
+        </>
     )
 }
 
